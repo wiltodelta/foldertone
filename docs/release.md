@@ -36,14 +36,14 @@ An Account Holder or Admin completes these once:
 - Register the explicit bundle ID `app.foldertone` and create the app record.
 - Sign with Xcode-managed distribution: an export with `-allowProvisioningUpdates` uses a cloud-managed Apple Distribution certificate, so no local distribution identity is needed.
 - Complete agreements and EU trader status. Foldertone 1.0 is a free, iPhone-only app.
-- Answer Content Rights, the age rating questionnaire, and App Privacy data collection yourself: they are legal declarations of the account holder, so an agent fills the rest of the listing but not these.
+- Answer Content Rights, the age rating questionnaire, and App Privacy data collection yourself: they are legal declarations of the account holder, so an agent fills the rest of the listing but not these. The account holder also presses Submit for Review.
 - Keep the policy from `docs/privacy.md` live at `https://wiltodelta.com/projects/foldertone/privacy/` and the support page at `https://wiltodelta.com/projects/foldertone/support/`. Both are served by the `wiltodelta-app` site and linked from the app's empty library and Sources sheet, as Guideline 5.1.1 requires.
 
 ## Listing
 
 - **Name:** Foldertone
 - **Subtitle:** Your folders, your playlists
-- **Category:** Music
+- **Category:** Music; secondary Productivity
 - **Support URL:** `https://wiltodelta.com/projects/foldertone/support/`
 - **Marketing URL:** `https://wiltodelta.com/projects/foldertone/`
 - **Copyright:** 2026 Victor Kuznetsov
