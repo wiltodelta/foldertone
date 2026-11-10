@@ -85,6 +85,10 @@ Attach or link a small sample set generated from `FoldertoneTests/Fixtures`, bec
 
 Capture them last, from the submitted build, using the Debug-only `--sample-library` launch argument described in `README.md`. Use the iPhone device classes App Store Connect currently requires. The project targets iPhone only, so no iPad set is needed.
 
+## Personal website
+
+Update `wiltodelta.com/projects/foldertone/` at every release, as `CLAUDE.md`, "Personal website", describes.
+
 ## Upload
 
 Upload from Xcode Organizer after the checks above pass on the exact archive. Tag the release only after that exact commit passes, and never reuse a tag once a build is public.

@@ -13,3 +13,9 @@ Act as a principal iOS engineer building Foldertone, a music player for files an
 - Preserve the one-screen library and native multi-selection file and folder picker. Keep file presenters active only in the foreground; background audio is separate. Use events and foreground reconciliation rather than periodic polling.
 - Validate file and folder permissions across Files providers, cloud downloads, and physical playback controls on an iPhone; simulator success does not prove these behaviors.
 - `scripts/draw-icon.py` generates `Foldertone/AppIcon.icon`; change its geometry and appearance in the generator, never in the generated layers.
+
+## Personal website
+
+The personal website (`wiltodelta/wiltodelta-app`, page `/projects/foldertone/`, plus the `privacy/` and `support/` pages the app links to) shows a library screenshot in both appearances, taken from `screenshots/library.png` and `library-dark.png`. At every release, regenerate them with `scripts/capture-screenshots.sh` when the pictured UI changed, never rename or remove them without updating that repository in the same change, and follow its `docs/product-updates.md`, "What product repositories owe the site".
+
+Website copy highlights only the main use cases and benefits; follow the site's `docs/product-updates.md`, "Visitor copy selection".

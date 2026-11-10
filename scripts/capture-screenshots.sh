@@ -60,8 +60,5 @@ for test in json.load(open(os.path.join(source, "manifest.json"))):
 EOF
 done
 
-# Half resolution keeps the repository light and stays sharp at README width.
-for image in "$ROOT"/screenshots/*.png; do
-  sips --resampleHeight 1311 "$image" >/dev/null
-done
+# Full simulator resolution: the personal website imports these files.
 ls -l "$ROOT/screenshots"
