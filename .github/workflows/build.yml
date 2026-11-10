@@ -1,0 +1,56 @@
+name: Build Foldertone
+
+# Release tags go only on commits that already passed here, so tags do not
+# trigger a second run.
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # macOS 26 host: the Icon Composer icon and Liquid Glass APIs need the
+    # iOS 26 SDK or later.
+    runs-on: macos-26
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+    - name: Select latest Xcode
+      run: |
+        LATEST_XCODE=$(ls /Applications | grep "^Xcode" | sort -V | tail -1)
+        echo "Using: $LATEST_XCODE"
+        sudo xcode-select -s "/Applications/$LATEST_XCODE/Contents/Developer"
+        xcodebuild -version
+
+    - name: Check Swift formatting
+      run: xcrun swift-format lint --strict --recursive Foldertone FoldertoneTests FoldertoneUITests scripts
+
+    - name: Run engine scenarios
+      run: scripts/check-engine.sh
+
+    # Unit tests only: the UI suite drives the system Files picker and is run
+    # locally through scripts/check-ui.sh.
+    - name: Run unit tests on an iPhone simulator
+      run: |
+        UDID=$(xcrun simctl list devices available -j | python3 -c '
+        import json, sys
+        devices = json.load(sys.stdin)["devices"]
+        ios = sorted((k for k in devices if ".iOS-" in k), reverse=True)
+        print(next(d["udid"] for k in ios for d in devices[k] if d["name"].startswith("iPhone")))')
+        echo "Simulator: $UDID"
+        xcodebuild test -project Foldertone.xcodeproj -scheme Foldertone \
+          -destination "platform=iOS Simulator,id=$UDID" \
+          -only-testing:FoldertoneTests CODE_SIGNING_ALLOWED=NO
+
+    - name: Build Release for a generic iOS device
+      run: |
+        xcodebuild build -project Foldertone.xcodeproj -scheme Foldertone \
+          -configuration Release -destination 'generic/platform=iOS' \
+          CODE_SIGNING_ALLOWED=NO

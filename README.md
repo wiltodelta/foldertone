@@ -48,6 +48,8 @@ scripts/check-ui.sh
 
 The runner creates a unique device from an installed iOS runtime, runs without opening Simulator.app, and deletes only its own device afterward. Use `--dry-run` to inspect the selection, `--only-testing FoldertoneUITests/FoldertoneUITests/testEmptyLibraryAndMusicPicker` for a focused UI check, and `--out PATH` to retain logs and the result bundle in a chosen folder. `IOS_UI_RUNNER` overrides the shared runner path. `FoldertoneTests` covers recursive synchronization, source failures, legacy migration, cache safety, folder playlists, single-file routing, codec metadata, event delivery, shuffle, repeat, and queue reconciliation. Run `scripts/check-engine.sh` for isolated macOS engine checks using the same shared scenarios. An optional scenario name limits the check, for example `scripts/check-engine.sh formats`. It creates and removes its own temporary workspace and never uses a personal music folder. The UI tests cover the system picker and playback flows. See [verification status](docs/verification.md) for completed and blocked checks.
 
+[GitHub Actions](.github/workflows/build.yml) runs the non-UI checks on every push and pull request; the UI suite stays local because it drives the system Files picker. Check formatting locally with `xcrun swift-format lint --strict --recursive Foldertone FoldertoneTests FoldertoneUITests scripts`.
+
 For a populated simulator preview, add `--sample-library` to the scheme's launch arguments. This Debug-only option creates synthetic tones without personal music or an iCloud account.
 
 ## Release
@@ -59,3 +61,7 @@ See the [App Store release procedure](docs/release.md) and the [privacy policy](
 File presenters are unregistered when the app enters the background, as required by iOS. Reopening the app reconciles changes made while it was suspended. Background audio operates separately from source monitoring. File-provider notification delivery, security-scoped bookmark persistence, iCloud downloads, lock screen commands, and accessory playback need verification on an iPhone.
 
 Apple references: [file presenters](https://developer.apple.com/documentation/foundation/nsfilepresenter), [iOS presenter lifecycle](https://developer.apple.com/documentation/foundation/nsfilecoordinator), [directory access](https://developer.apple.com/documentation/uikit/providing-access-to-directories), [media metadata](https://developer.apple.com/documentation/avfoundation/retrieving-media-metadata), and [background playback](https://developer.apple.com/documentation/avfoundation/configuring-your-app-for-media-playback).
+
+## License
+
+[Apache License 2.0](LICENSE).
