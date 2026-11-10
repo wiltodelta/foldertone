@@ -6,7 +6,7 @@ A simple iOS player for your own audio files. A folder becomes a playlist.
 
 1. Choose a music folder through the system Files picker.
 2. Its audio files, including every nested subfolder, appear in one flat playlist.
-3. Press **Play all** or **Shuffle**. The compact player stays at the bottom; tap it for playback position, repeat, and the queue.
+3. Press **Play all**. The compact player stays at the bottom; tap it for playback position, shuffle, repeat, and the queue. Play all keeps the shuffle mode last chosen in the player.
 
 Each connected folder has a separate playlist. Choose among them with the playlist selector. Selecting one audio file starts it playing after its local copy is ready and does not create a playlist. Audio files can also open in Foldertone through the system document-opening flow.
 

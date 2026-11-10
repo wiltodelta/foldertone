@@ -55,6 +55,24 @@ import ImageIO
       XCTAssertNil(player.current)
       XCTAssertFalse(player.isPlaying)
     }
+
+    @MainActor func testPlayAllKeepsTheChosenShuffleMode() async throws {
+      let sample = try SampleLibrary.create()
+      let tracks = try await FolderImporter().synchronize(
+        [SyncSource(id: "play-all", url: sample)], previous: LibraryIndex()
+      ).index.tracks
+      XCTAssertGreaterThan(tracks.count, 1)
+      let player = MusicPlayer()
+      player.playAll(tracks)
+      XCTAssertFalse(player.isShuffled)
+      XCTAssertEqual(player.current?.id, tracks.first?.id)
+      XCTAssertEqual(player.upNext.map(\.id), tracks.dropFirst().map(\.id))
+      player.toggleShuffle()
+      player.playAll(tracks)
+      XCTAssertTrue(player.isShuffled, "Play all must keep shuffle chosen in the player")
+      let played = [player.current?.id].compactMap { $0 } + player.upNext.map(\.id)
+      XCTAssertEqual(played.sorted(), tracks.map(\.id).sorted())
+    }
   }
 #endif
 

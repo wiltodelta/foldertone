@@ -92,10 +92,12 @@ final class MusicPlayer {
     start(track)
   }
 
-  func shufflePlay(_ tracks: [Track], context: PlaybackContext = .selection) {
-    guard let first = tracks.randomElement() else { return }
+  /// Plays every track in the order mode last chosen in the player.
+  func playAll(_ tracks: [Track], context: PlaybackContext = .selection) {
+    let shuffled = queue.isShuffled
+    guard let first = shuffled ? tracks.randomElement() : tracks.first else { return }
     self.context = context
-    queue.begin(tracks, starting: first, shuffled: true)
+    queue.begin(tracks, starting: first, shuffled: shuffled)
     start(first)
   }
 

@@ -75,6 +75,12 @@ final class FoldertoneUITests: XCTestCase {
     XCTAssertTrue(app.navigationBars["Up next"].waitForExistence(timeout: 5))
     app.buttons["Done"].tap()
     app.navigationBars["Now playing"].buttons["Close"].tap()
+    XCTAssertFalse(app.buttons["Shuffle"].exists)
+    app.buttons["playAll"].tap()
+    mini.tap()
+    XCTAssertTrue(app.navigationBars["Now playing"].waitForExistence(timeout: 5))
+    XCTAssertEqual(app.buttons["toggleShuffle"].value as? String, "On")
+    app.navigationBars["Now playing"].buttons["Close"].tap()
     app.terminate()
     app.launchArguments = []
     app.launch()

@@ -257,25 +257,14 @@ struct LibraryView: View {
         if library.isRefreshing { ProgressView().controlSize(.mini) }
         Text(library.status).font(.caption).foregroundStyle(Palette.secondaryText)
       }
-      let actionLayout =
-        dynamicTypeSize.isAccessibilitySize
-        ? AnyLayout(VStackLayout(spacing: 12)) : AnyLayout(HStackLayout(spacing: 12))
-      actionLayout {
-        Button("Play all", systemImage: "play.fill") {
-          if let first = filtered.first {
-            player.play(first, in: filtered, context: playbackContext)
-          }
-        }
-        .frame(maxWidth: .infinity).musicGlassButton(prominent: true)
-        .accessibilityIdentifier("playAll")
-        Button("Shuffle", systemImage: "shuffle") {
-          player.shufflePlay(filtered, context: playbackContext)
-        }
-        .frame(maxWidth: .infinity).musicGlassButton()
-        .accessibilityIdentifier("shuffleAll")
+      Button {
+        player.playAll(filtered, context: playbackContext)
+      } label: {
+        Label("Play all", systemImage: "play.fill").frame(maxWidth: .infinity)
       }
-      .font(.subheadline.weight(.semibold)).buttonBorderShape(.capsule).disabled(filtered.isEmpty)
-      .musicGlassGroup(spacing: 12)
+      .font(.headline).controlSize(.large).musicGlassButton(prominent: true)
+      .buttonBorderShape(.capsule).disabled(filtered.isEmpty)
+      .accessibilityIdentifier("playAll")
       LazyVStack(spacing: 0) {
         ForEach(filtered) { track in
           Button {

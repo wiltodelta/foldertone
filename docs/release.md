@@ -34,8 +34,9 @@ These depend on real hardware and accounts, so simulator results do not count.
 An Account Holder or Admin completes these once:
 
 - Register the explicit bundle ID `app.foldertone` and create the app record.
-- Create or let Xcode manage an Apple Distribution certificate. This Mac currently has only Apple Development and Developer ID identities.
+- Sign with Xcode-managed distribution: an export with `-allowProvisioningUpdates` uses a cloud-managed Apple Distribution certificate, so no local distribution identity is needed.
 - Complete agreements and EU trader status. Foldertone 1.0 is a free, iPhone-only app.
+- Answer Content Rights, the age rating questionnaire, and App Privacy data collection yourself: they are legal declarations of the account holder, so an agent fills the rest of the listing but not these.
 - Keep the policy from `docs/privacy.md` live at `https://wiltodelta.com/projects/foldertone/privacy/` and the support page at `https://wiltodelta.com/projects/foldertone/support/`. Both are served by the `wiltodelta-app` site and linked from the app's empty library and Sources sheet, as Guideline 5.1.1 requires.
 
 ## Listing
@@ -43,6 +44,10 @@ An Account Holder or Admin completes these once:
 - **Name:** Foldertone
 - **Subtitle:** Your folders, your playlists
 - **Category:** Music
+- **Support URL:** `https://wiltodelta.com/projects/foldertone/support/`
+- **Marketing URL:** `https://wiltodelta.com/projects/foldertone/`
+- **Copyright:** 2026 Victor Kuznetsov
+- **Availability:** iPhone only; Apple silicon Mac and Apple Vision Pro distribution is turned off.
 - **Keywords:** audio player,flac,mp3,alac,folder,playlist,files,icloud drive,local music,offline
 - **App Privacy:** Data Not Collected. Tracking: No.
 - **Encryption:** `ITSAppUsesNonExemptEncryption` is `NO`.
@@ -69,7 +74,7 @@ Foldertone only reads your music. It never changes or deletes your original file
 ```text
 Foldertone plays audio files the user already has. It has no account or server, and it opens with an empty library until music is chosen.
 
-To review: tap + and choose the attached sample folder, or any folder containing audio, in Files. The folder becomes a playlist. Press Play all or Shuffle, then tap the mini-player for the full player and Up next. Adding or deleting a file in that folder updates the playlist.
+To review: unzip the attached Foldertone Sample Music folder into Files (On My iPhone or iCloud Drive), tap + in Foldertone, and choose that folder. It becomes one playlist, including its subfolders. Press Play all, then tap the mini-player for the full player, shuffle, repeat, and Up next. Adding or deleting a file in that folder updates the playlist.
 
 Background audio is used only to continue playback of the user's chosen music. The sample files are synthetic tones created for testing.
 ```

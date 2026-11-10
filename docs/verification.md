@@ -15,7 +15,7 @@ The XCTest suite passes on a clean iPhone 17e simulator. The shared engine scena
 - Shuffle without unintended repeats, repeat modes, queue reconciliation, and safe cleanup of unused local copies.
 - Player metadata updates after a rename and clearing playback after removal.
 
-The UI suite passes the system picker, playlist selection, search, real synthetic-file playback, pause, next track, shuffle, repeat, Up next, library restoration, and automatic single-file playback without a folder playlist. Screens were captured from the shipping iOS renderer and inspected in light and dark appearances. Maximum accessibility text size was also exercised; action buttons stack vertically and playback controls stay anchored below scrolling content.
+The UI suite passes the system picker, playlist selection, search, real synthetic-file playback, pause, next track, shuffle, repeat, Play all keeping the player's shuffle mode, Up next, library restoration, and automatic single-file playback without a folder playlist. Screens were captured from the shipping iOS renderer and inspected in light and dark appearances. Maximum accessibility text size was also exercised; the single Play all button keeps its label on one line and playback controls stay anchored below scrolling content.
 
 Temporary negative variants confirmed the scenarios detect disabled notifications, append-only retention, broken rename identity, erased offline snapshots, skipped subfolders, incomplete traversal treated as deletion, file-created playlists, lost single-file routing, missed cache cleanup, missing FLAC tags and covers, lost legacy identities, broken shuffle/repeat, incorrect persistence, incorrect cover dimensions, and ignored malformed metadata. A preserved-date overwrite failed before the notification invalidation fix and passed after it.
 
@@ -49,7 +49,7 @@ The folder-and-Play icon was inspected in Icon Composer in Default, Dark, and Mo
 
 The signed Debug device build and strict Swift formatting check pass after adopting native glass controls. The updated build installs over the existing app without removing its connected sources. Physical iPhone inspection covers the library and mini-player in light and dark appearances, playlist selection, playback and pause, opening and closing the expanded player, and maximum accessibility text size. The final expanded player was inspected in both appearances after restoring the opaque control-panel backing and limiting icon-only control scaling; scrolling exposes the timeline without metadata overlapping the controls. System appearance and the app's launch-time text-size override are restored after verification.
 
-The iOS 17–25 material and button fallbacks compile behind availability checks but have not been rendered on an older physical device in this pass. That earlier pass did not cover Increased Contrast, Reduce Transparency, VoiceOver, or landscape. The audit-fix simulator pass below supersedes its landscape and interaction limitations.
+The iOS 17–25 material and button fallbacks compile behind availability checks but have not been rendered on an older physical device in this pass. Xcode 27.2 reports iOS 17.5 and 18.6 simulator runtimes as not available for download, so they cannot be rendered on a simulator on this Mac either. That earlier pass did not cover Increased Contrast, Reduce Transparency, VoiceOver, or landscape. The audit-fix simulator pass below supersedes its landscape and interaction limitations.
 
 
 ## UI audit fixes
