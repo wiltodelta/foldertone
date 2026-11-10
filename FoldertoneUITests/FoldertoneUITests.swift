@@ -88,6 +88,30 @@ final class FoldertoneUITests: XCTestCase {
     waitForExpectations(timeout: 10)
   }
 
+  /// README screenshots; scripts/capture-screenshots.sh supplies the folder.
+  @MainActor
+  func testReadmeScreenshots() throws {
+    guard let folder = ProcessInfo.processInfo.environment["FOLDERTONE_SCREENSHOT_FOLDER"] else {
+      throw XCTSkip("Run through scripts/capture-screenshots.sh")
+    }
+    let app = XCUIApplication()
+    app.launchArguments = ["--empty-library", "--library-folder", folder]
+    app.launch()
+    // Play all only after the whole folder is indexed, so it starts from the first track.
+    XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 30))
+    app.buttons["playAll"].tap()
+    let mini = app.buttons["openPlayer"]
+    XCTAssertTrue(mini.waitForExistence(timeout: 10))
+    expectation(
+      for: NSPredicate(format: "label == %@", "Pause"), evaluatedWith: app.buttons["miniPlayPause"])
+    waitForExpectations(timeout: 15)
+    attach(app, name: "library")
+    mini.tap()
+    XCTAssertTrue(app.navigationBars["Now playing"].waitForExistence(timeout: 5))
+    sleep(2)
+    attach(app, name: "player")
+  }
+
   @MainActor private func attach(_ app: XCUIApplication, name: String) {
     let attachment = XCTAttachment(screenshot: app.screenshot())
     attachment.name = name

@@ -11,13 +11,19 @@ struct FoldertoneApp: App {
       LibraryView(library: library, player: player)
         .task {
           #if DEBUG
-            if ProcessInfo.processInfo.arguments.contains("--sample-library") {
-              do {
-                let folder = try SampleLibrary.create()
-                try library.connect(folder)
-              } catch {
-                library.errorMessage = error.localizedDescription
+            let arguments = ProcessInfo.processInfo.arguments
+            do {
+              if arguments.contains("--sample-library") {
+                try library.connect(SampleLibrary.create())
               }
+              // scripts/capture-screenshots.sh passes a synthetic folder from the host.
+              if let flag = arguments.firstIndex(of: "--library-folder"),
+                arguments.indices.contains(flag + 1)
+              {
+                try library.connect(URL(fileURLWithPath: arguments[flag + 1], isDirectory: true))
+              }
+            } catch {
+              library.errorMessage = error.localizedDescription
             }
           #endif
           await library.activate()
