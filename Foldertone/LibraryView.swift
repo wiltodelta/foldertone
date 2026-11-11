@@ -418,16 +418,28 @@ struct MiniPlayer: View {
         }.contentShape(.rect)
       }
       .buttonStyle(.plain).accessibilityIdentifier("openPlayer")
-      Button(
-        player.isPlaying ? "Pause" : "Play",
-        systemImage: player.isPlaying ? "pause.fill" : "play.fill"
-      ) { player.toggle() }
-      .labelStyle(.iconOnly).font(.title3).frame(width: 44, height: 44)
+      // The 44-point frame sits inside the label so the whole target takes the tap;
+      // outside it, only the glyph is hittable.
+      Button {
+        player.toggle()
+      } label: {
+        Label(
+          player.isPlaying ? "Pause" : "Play",
+          systemImage: player.isPlaying ? "pause.fill" : "play.fill"
+        )
+        .labelStyle(.iconOnly).font(.title3).frame(width: 44, height: 44).contentShape(.rect)
+      }
       .accessibilityIdentifier("miniPlayPause")
-      Button("Next track", systemImage: "forward.end.fill") { player.next() }
-        .labelStyle(.iconOnly).frame(width: 44, height: 44)
+      Button {
+        player.next()
+      } label: {
+        Label("Next track", systemImage: "forward.end.fill")
+          .labelStyle(.iconOnly).frame(width: 44, height: 44).contentShape(.rect)
+      }
     }
     .padding(12).musicGlassSurface(cornerRadius: 28)
+    // The whole bar takes touches, so a near miss never reaches the track row behind it.
+    .contentShape(.rect(cornerRadius: 28))
   }
 }
 

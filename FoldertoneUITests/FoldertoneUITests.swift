@@ -58,6 +58,14 @@ final class FoldertoneUITests: XCTestCase {
     let playing = NSPredicate(format: "label == %@", "Pause")
     expectation(for: playing, evaluatedWith: app.buttons["miniPlayPause"])
     waitForExpectations(timeout: 15)
+    // The mini-player's own button pauses and resumes; a tap must not fall through to a row.
+    app.buttons["miniPlayPause"].tap()
+    expectation(
+      for: NSPredicate(format: "label == %@", "Play"), evaluatedWith: app.buttons["miniPlayPause"])
+    waitForExpectations(timeout: 5)
+    app.buttons["miniPlayPause"].tap()
+    expectation(for: playing, evaluatedWith: app.buttons["miniPlayPause"])
+    waitForExpectations(timeout: 5)
     mini.tap()
     XCTAssertTrue(app.navigationBars["Now playing"].waitForExistence(timeout: 5))
     attach(app, name: "Now playing")
