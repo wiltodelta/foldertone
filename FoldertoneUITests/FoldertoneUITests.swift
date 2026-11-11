@@ -96,6 +96,46 @@ final class FoldertoneUITests: XCTestCase {
     waitForExpectations(timeout: 10)
   }
 
+  @MainActor
+  func testRowTogglesAndRemovedSongsReturn() {
+    let app = XCUIApplication()
+    app.launchArguments = ["--empty-library", "--sample-library"]
+    app.launch()
+    expectation(for: NSPredicate(format: "enabled == true"), evaluatedWith: app.buttons["playAll"])
+    waitForExpectations(timeout: 20)
+    app.buttons["playlistPicker"].tap()
+    app.buttons["Sample music"].tap()
+    let first = app.buttons["track-01 - Slow morning"]
+    let state = app.buttons["miniPlayPause"]
+    // The first tap plays the song; tapping the playing song pauses it, then resumes it.
+    for (index, wanted) in ["Pause", "Play", "Pause"].enumerated() {
+      first.tap()
+      if index == 0 { XCTAssertTrue(state.waitForExistence(timeout: 10)) }
+      expectation(for: NSPredicate(format: "label == %@", wanted), evaluatedWith: state)
+      waitForExpectations(timeout: 10)
+    }
+    let second = app.buttons["track-02 - A little further"]
+    second.press(forDuration: 1.2)
+    XCTAssertTrue(app.buttons["Remove from Playlist"].waitForExistence(timeout: 5))
+    attach(app, name: "Song menu")
+    app.buttons["Remove from Playlist"].tap()
+    XCTAssertTrue(second.waitForNonExistence(timeout: 5))
+    app.terminate()
+    app.launchArguments = []
+    app.launch()
+    XCTAssertTrue(first.waitForExistence(timeout: 15))
+    XCTAssertFalse(second.exists, "A removed song must not come back after relaunch")
+    app.buttons["sourceSettings"].tap()
+    app.buttons["Removed Songs (1)"].tap()
+    XCTAssertTrue(app.buttons["restore-02 - A little further"].waitForExistence(timeout: 5))
+    attach(app, name: "Removed songs")
+    app.buttons["restore-02 - A little further"].tap()
+    XCTAssertTrue(app.staticTexts["No Removed Songs"].waitForExistence(timeout: 5))
+    app.navigationBars.buttons.element(boundBy: 0).tap()
+    app.buttons["Done"].tap()
+    XCTAssertTrue(second.waitForExistence(timeout: 5))
+  }
+
   /// README screenshots; scripts/capture-screenshots.sh supplies the folder.
   @MainActor
   func testReadmeScreenshots() throws {

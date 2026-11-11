@@ -188,6 +188,12 @@ final class MusicPlayer {
       errorMessage = error.localizedDescription
     }
   }
+  /// Starts the current track again without changing the queue or its order.
+  func restart() {
+    seek(to: 0)
+    resume()
+  }
+
   func seek(to seconds: Double) {
     player.seek(
       to: CMTime(seconds: max(0, min(seconds, current?.duration ?? 0)), preferredTimescale: 600))

@@ -6,6 +6,10 @@ Foldertone is for listening to a personal collection of audio files. Its primary
 
 The main screen uses a native navigation title, toolbar actions, a checked playlist picker, and system search within the current selection. A single prominent Play all acts on the filtered tracks and keeps the shuffle mode last chosen in the player; shuffle and repeat controls live only in the player. Each folder is a named playlist, with all nested audio flattened into the same list. All music combines the sources without duplicating overlapping selections. The selected playlist is restored across launches, with All music as the fallback after its source is disconnected. Version 1.0 is iPhone-only. The privacy policy is linked from the empty library and the Sources sheet, with support beside it in Sources.
 
+Tapping a song plays it; tapping the song that is playing pauses it, and tapping it again resumes. The playing song's waveform animates while it plays and holds still when paused or with Reduce Motion. Touching and holding a song offers Play from Beginning for the current song, which restarts it without changing the queue, and Remove from Playlist, or Remove from Library in All music.
+
+Removing a song never touches its file. Removing it from a folder playlist hides it there and from All music unless another source holds it; removing it from All music hides it from every source that holds it. Removed songs are remembered by their audio content, so syncing, renaming, moving or copying the same file again does not bring them back. Each source in the Sources sheet lists its Removed Songs, where a song can be restored.
+
 Choosing one audio file requests immediate playback once the local copy is ready. It does not create a folder playlist. The same behavior handles a file opened through the system document-opening flow.
 
 ## Appearance
@@ -22,7 +26,7 @@ Shuffle defines an order rather than choosing a random track independently at ev
 
 ## Source of truth
 
-The connected folder determines playlist membership. A complete recursive scan updates additions, removals, filename changes, moves, and replaced audio. Each source has an independent persisted membership snapshot. Shared tracks can belong to multiple playlists.
+The connected folder determines playlist membership, minus the songs the user removed. A complete recursive scan updates additions, removals, filename changes, moves, and replaced audio. Each source has an independent persisted membership snapshot. Shared tracks can belong to multiple playlists.
 
 A failed root or incomplete traversal does not establish deletion. Its last complete membership stays available and the status reports the problem. Cached audio provides playback while a source is temporarily unavailable. Confirmed removals update both the playlist and its playback queue before unreferenced local copies are removed.
 

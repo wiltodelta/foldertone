@@ -29,6 +29,8 @@ Your original files are only read, never changed.
 2. Its audio files, including every nested subfolder, appear in one flat playlist.
 3. Press **Play all**. The compact player stays at the bottom; tap it for playback position, shuffle, repeat, and the queue. Play all keeps the shuffle mode last chosen in the player.
 
+Tap the playing song to pause it and tap again to resume; touch and hold a song to play it from the beginning or remove it. A removed song stays in Files and stays out of the playlist until you restore it under Sources > Removed Songs.
+
 Each connected folder has a separate playlist. Choose among them with the playlist selector. Selecting one audio file starts it playing after its local copy is ready and does not create a playlist. Audio files can also open in Foldertone through the system document-opening flow.
 
 The app supports multiple files and folders from On My iPhone, iCloud Drive, and connected Files providers, subject to the access those providers expose. It remembers the selected sources and playlist. Use Sources in the toolbar or Manage Sources in the playlist menu to rename, reconnect, or disconnect a source. Disconnecting leaves the original files in Files and keeps tracks shared with other sources.

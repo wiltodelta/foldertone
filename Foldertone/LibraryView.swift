@@ -267,17 +267,35 @@ struct LibraryView: View {
       .accessibilityIdentifier("playAll")
       LazyVStack(spacing: 0) {
         ForEach(filtered) { track in
+          let isCurrent = player.current?.id == track.id
           Button {
-            player.play(track, in: filtered, context: playbackContext)
+            // Tapping the current song pauses or resumes it rather than starting it again.
+            if isCurrent {
+              player.toggle()
+            } else {
+              player.play(track, in: filtered, context: playbackContext)
+            }
           } label: {
             TrackRow(
               track: track,
-              currentSymbol: player.current?.id == track.id
-                ? (player.isPlaying ? "waveform" : "pause.fill") : nil
+              playback: isCurrent ? (player.isPlaying ? .playing : .paused) : nil
             )
             .padding(.vertical, 11).contentShape(.rect)
           }
           .buttonStyle(.plain).accessibilityIdentifier("track-\(track.title)")
+          .contextMenu {
+            if isCurrent {
+              Button("Play from Beginning", systemImage: "backward.end") { player.restart() }
+            }
+            Button(
+              selectedPlaylist == nil ? "Remove from Library" : "Remove from Playlist",
+              systemImage: "minus.circle", role: .destructive
+            ) {
+              do { try library.remove(track, fromPlaylist: selectedPlaylist?.id) } catch {
+                library.errorMessage = error.localizedDescription
+              }
+            }
+          }
         }
       }
       if filtered.isEmpty {
@@ -365,10 +383,15 @@ struct TrackArtwork: View {
   }
 }
 
+enum RowPlayback {
+  case playing, paused
+}
+
 struct TrackRow: View {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
   let track: Track
-  var currentSymbol: String? = nil
+  var playback: RowPlayback? = nil
 
   var body: some View {
     HStack(spacing: 14) {
@@ -386,9 +409,15 @@ struct TrackRow: View {
         }
       }
       .frame(maxWidth: .infinity, alignment: .leading)
-      if let currentSymbol {
-        Image(systemName: currentSymbol).foregroundStyle(Palette.accent)
-          .accessibilityLabel("Current track")
+      if let playback {
+        // The waveform pulses while the song plays and holds still when paused or with Reduce Motion.
+        Image(systemName: playback == .playing ? "waveform" : "pause.fill")
+          .symbolEffect(
+            .variableColor.iterative.dimInactiveLayers.nonReversing, options: .repeating,
+            isActive: playback == .playing && !reduceMotion
+          )
+          .foregroundStyle(Palette.accent)
+          .accessibilityLabel(playback == .playing ? "Now playing" : "Paused")
       } else if !dynamicTypeSize.isAccessibilitySize {
         Text(track.duration.clockText).font(.caption.monospacedDigit()).foregroundStyle(
           Palette.secondaryText)
@@ -645,6 +674,7 @@ struct SourceManagerView: View {
   @State private var reconnecting: MusicSource?
   @State private var choosingReplacement = false
   @State private var disconnecting: MusicSource?
+  @State private var viewingRemoved: MusicSource?
   @State private var errorMessage: String?
 
   var body: some View {
@@ -674,6 +704,9 @@ struct SourceManagerView: View {
         }
       }
       .navigationTitle("Sources")
+      .navigationDestination(item: $viewingRemoved) { source in
+        RemovedSongsView(library: library, source: source)
+      }
       .toolbar {
         ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
       }
@@ -738,7 +771,58 @@ struct SourceManagerView: View {
       reconnecting = source
       choosingReplacement = true
     }.frame(minHeight: 44)
+    if source.removedCount > 0 {
+      Button("Removed Songs (\(source.removedCount))") { viewingRemoved = source }
+        .frame(minHeight: 44)
+    }
     Button("Disconnect", role: .destructive) { disconnecting = source }.frame(minHeight: 44)
+  }
+}
+
+/// Songs removed from one source. Restoring one returns it to the playlist and All music.
+struct RemovedSongsView: View {
+  let library: MusicLibrary
+  let source: MusicSource
+  @State private var errorMessage: String?
+
+  var body: some View {
+    let tracks = library.removedTracks(in: source.id)
+    List {
+      Section {
+        ForEach(tracks) { track in
+          HStack(spacing: 12) {
+            TrackRow(track: track)
+            Button("Restore") {
+              do { try library.restore(track, in: source.id) } catch {
+                errorMessage = error.localizedDescription
+              }
+            }
+            .buttonStyle(.borderless).frame(minHeight: 44)
+            .accessibilityIdentifier("restore-\(track.title)")
+          }
+        }
+      } footer: {
+        Text(
+          "Restore a song to bring it back to the playlist and All music. Its file stays in Files.")
+      }
+    }
+    .overlay {
+      if tracks.isEmpty {
+        ContentUnavailableView(
+          "No Removed Songs", systemImage: "music.note.list",
+          description: Text("Songs you remove from \(source.name) appear here."))
+      }
+    }
+    .navigationTitle("Removed Songs")
+    .alert(
+      "Could not restore the song",
+      isPresented: Binding(
+        get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })
+    ) {
+      Button("OK") { errorMessage = nil }
+    } message: {
+      Text(errorMessage ?? "")
+    }
   }
 }
 

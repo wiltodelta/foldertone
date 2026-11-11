@@ -22,6 +22,7 @@ import Foundation
         ("legacy", { try await SyncScenarios.legacyIndex() }),
         ("playlists", { try await SyncScenarios.playlistsAndFiles() }),
         ("source-management", { try await SyncScenarios.sourceManagement() }),
+        ("removed", { try await SyncScenarios.removedSongs() }),
         ("cache", { try await SyncScenarios.cacheCleanup() }),
         ("incomplete", { try await SyncScenarios.incompleteEnumeration() }),
       ]

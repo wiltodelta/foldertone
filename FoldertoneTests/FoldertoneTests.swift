@@ -30,6 +30,9 @@ import ImageIO
     @MainActor func testFoldersBecomePlaylistsAndSingleFileRequestsPlayback() async throws {
       try await SyncScenarios.playlistsAndFiles()
     }
+    @MainActor func testRemovedSongsStayRemovedUntilRestored() async throws {
+      try await SyncScenarios.removedSongs()
+    }
     @MainActor func testSourceManagementPreservesOriginalsAndSharedTracks() async throws {
       try await SyncScenarios.sourceManagement()
     }
@@ -356,6 +359,71 @@ enum SyncScenarios {
           atPath: f.a.appendingPathComponent("Nested/Deep/Two.wav").path)
         && FileManager.default.fileExists(atPath: f.b.appendingPathComponent("Three.wav").path),
       "Source management must never delete original files")
+  }
+
+  @MainActor static func removedSongs() async throws {
+    let f = try Fixture()
+    defer { f.cleanup() }
+    let domain = "FoldertoneRemovedTests.\(UUID().uuidString)"
+    let defaults = UserDefaults(suiteName: domain)!
+    defer { defaults.removePersistentDomain(forName: domain) }
+    let library = MusicLibrary(defaults: defaults)
+    let three = f.b.appendingPathComponent("Three.wav")
+    try library.addSources([f.a, f.b, three])
+    await library.refresh()
+    let music = library.playlists.first { $0.name == "Music" }!.id
+    let other = library.playlists.first { $0.name == "Other music" }!.id
+    let one = library.tracks.first { $0.title == "One" }!
+    try library.remove(one, fromPlaylist: music)
+    try check(
+      library.playlists.first { $0.id == music }?.trackIDs.contains(one.id) == false
+        && !library.tracks.contains { $0.id == one.id }
+        && library.removedTracks(in: music).map(\.id) == [one.id],
+      "A removed song must leave its playlist and All music when no other source holds it")
+    await library.refresh()
+    let moved = f.a.appendingPathComponent("Nested/Uno.wav")
+    try FileManager.default.moveItem(at: f.a.appendingPathComponent("One.wav"), to: moved)
+    await library.refresh()
+    try check(
+      !library.tracks.contains { $0.title == "One" || $0.title == "Uno" },
+      "Syncing, renaming and moving must not bring a removed song back")
+    try FileManager.default.removeItem(at: moved)
+    try FileManager.default.copyItem(at: f.samples[0], to: f.a.appendingPathComponent("Copy.wav"))
+    await library.refresh()
+    try check(
+      !library.tracks.contains { $0.title == "Copy" },
+      "A new copy of the same audio must stay removed")
+    let relaunched = MusicLibrary(defaults: defaults)
+    await relaunched.refresh()
+    try check(
+      relaunched.tracks.count == library.tracks.count
+        && relaunched.removedTracks(in: music).count == 1,
+      "Removed songs must survive relaunch")
+    let threeTrack = library.tracks.first { $0.title == "Three" }!
+    try library.remove(threeTrack, fromPlaylist: other)
+    try check(
+      library.playlists.first { $0.id == other }?.trackIDs.isEmpty == true
+        && library.tracks.contains { $0.id == threeTrack.id },
+      "A song another source still holds must stay in All music")
+    try library.remove(threeTrack, fromPlaylist: nil)
+    try check(
+      !library.tracks.contains { $0.id == threeTrack.id },
+      "Removing from All music must remove the song from every source that holds it")
+    await library.cleanupCache(keeping: [])
+    let copy = library.removedTracks(in: music)[0]
+    try check(
+      FileManager.default.fileExists(atPath: copy.url.path),
+      "Cache cleanup must keep the local copy of a removed song")
+    try library.restore(copy, in: music)
+    try check(
+      library.tracks.contains { $0.id == copy.id }
+        && library.playlists.first { $0.id == music }?.trackIDs.contains(copy.id) == true
+        && library.removedTracks(in: music).isEmpty,
+      "Restoring must return the song to its playlist and All music")
+    try check(
+      FileManager.default.fileExists(atPath: f.a.appendingPathComponent("Copy.wav").path)
+        && FileManager.default.fileExists(atPath: three.path),
+      "Removing songs must never delete original files")
   }
 
   static func cacheCleanup() async throws {

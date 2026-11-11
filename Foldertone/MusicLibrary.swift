@@ -20,6 +20,11 @@ struct Track: Identifiable, Codable, Equatable, Sendable {
   var metadataVersion: Int? = nil
 
   var url: URL { LibraryStorage.directory.appendingPathComponent(filename) }
+  /// Removal follows the audio, so a renamed, moved or copied file stays removed.
+  var removalKey: String { contentHash ?? id }
+  func isRemoved(by keys: Set<String>) -> Bool {
+    keys.contains(id) || contentHash.map(keys.contains) == true
+  }
 }
 
 struct LibraryIndex: Codable, Equatable, Sendable {
@@ -63,10 +68,11 @@ struct Playlist: Identifiable, Equatable {
   let trackIDs: Set<String>
 }
 
-struct MusicSource: Identifiable, Equatable {
+struct MusicSource: Identifiable, Hashable {
   let id: String
   let name: String
   let isFolder: Bool
+  var removedCount = 0
 }
 
 struct SyncSource: Sendable {
@@ -363,13 +369,18 @@ final class MusicLibrary {
     var name: String? = nil
     var customName: String? = nil
     var isFolder: Bool? = nil
+    /// Content hashes (track IDs for tracks without one) the user removed from this source.
+    var removed: [String]? = nil
   }
   private struct Source {
     var saved: SavedSource
     var url: URL?
   }
 
+  /// Tracks visible in All music: indexed tracks minus songs the user removed.
   private(set) var tracks: [Track] = []
+  private var visibleMemberships: [String: Set<String>] = [:]
+  private var removedMemberships: [String: Set<String>] = [:]
   private(set) var isRefreshing = false
   private(set) var status = "Your music, in one place."
   var errorMessage: String?
@@ -396,13 +407,75 @@ final class MusicLibrary {
     sources.filter { $0.saved.isFolder == true }.map { source in
       Playlist(
         id: source.saved.id, name: displayName(source.saved),
-        trackIDs: Set(index.memberships[source.saved.id] ?? []))
+        trackIDs: visibleMemberships[source.saved.id] ?? [])
     }
   }
 
   var connections: [MusicSource] {
     sources.map {
-      MusicSource(id: $0.saved.id, name: displayName($0.saved), isFolder: $0.saved.isFolder == true)
+      MusicSource(
+        id: $0.saved.id, name: displayName($0.saved), isFolder: $0.saved.isFolder == true,
+        removedCount: removedMemberships[$0.saved.id]?.count ?? 0)
+    }
+  }
+
+  /// Recomputes what the library shows after the index, the sources or removed songs change.
+  private func publish() {
+    var visible = Set(index.unassigned)
+    var memberships: [String: Set<String>] = [:]
+    var removedIDs: [String: Set<String>] = [:]
+    for source in sources {
+      let id = source.saved.id
+      let members = Set(index.memberships[id] ?? [])
+      let keys = Set(source.saved.removed ?? [])
+      let removed =
+        keys.isEmpty
+        ? []
+        : Set(index.tracks.filter { members.contains($0.id) && $0.isRemoved(by: keys) }.map(\.id))
+      memberships[id] = members.subtracting(removed)
+      removedIDs[id] = removed
+      visible.formUnion(members.subtracting(removed))
+    }
+    visibleMemberships = memberships
+    removedMemberships = removedIDs
+    tracks = index.tracks.filter { visible.contains($0.id) }
+  }
+
+  private func updateSources(_ change: (inout [Source]) -> Void) throws {
+    var updated = sources
+    change(&updated)
+    try persistSources(updated)
+    sources = updated
+    publish()
+  }
+
+  /// Removes a song from one folder playlist, or from every source that holds it when no
+  /// playlist is given. The original file stays in Files, and the song stays removed across
+  /// syncs, renames and moves until it is restored.
+  func remove(_ track: Track, fromPlaylist playlistID: String?) throws {
+    try updateSources { sources in
+      for i in sources.indices {
+        let id = sources[i].saved.id
+        guard playlistID == nil || playlistID == id,
+          index.memberships[id]?.contains(track.id) == true
+        else { continue }
+        var removed = sources[i].saved.removed ?? []
+        if !removed.contains(track.removalKey) { removed.append(track.removalKey) }
+        sources[i].saved.removed = removed
+      }
+    }
+  }
+
+  /// Songs removed from a source that are still in its folder, in library order.
+  func removedTracks(in sourceID: String) -> [Track] {
+    guard let removed = removedMemberships[sourceID], !removed.isEmpty else { return [] }
+    return index.tracks.filter { removed.contains($0.id) }
+  }
+
+  func restore(_ track: Track, in sourceID: String) throws {
+    try updateSources { sources in
+      guard let i = sources.firstIndex(where: { $0.saved.id == sourceID }) else { return }
+      sources[i].saved.removed?.removeAll { track.isRemoved(by: [$0]) }
     }
   }
 
@@ -485,7 +558,6 @@ final class MusicLibrary {
     #endif
     do {
       index = try LibraryIndex.load()
-      tracks = index.tracks
     } catch {
       errorMessage = "The saved library could not be read. Add its sources again to resync it."
     }
@@ -503,6 +575,7 @@ final class MusicLibrary {
     }
     sources = saved.map { Source(saved: $0, url: nil) }
     resolveSources()
+    publish()
   }
 
   func connect(_ url: URL) throws { try addSources([url]) }
@@ -524,7 +597,8 @@ final class MusicLibrary {
       }
       let saved = SavedSource(
         id: existing?.saved.id ?? UUID().uuidString, bookmark: bookmark,
-        name: Self.sourceName(url), customName: existing?.saved.customName, isFolder: isFolder)
+        name: Self.sourceName(url), customName: existing?.saved.customName, isFolder: isFolder,
+        removed: existing?.saved.removed)
       updated.removeAll { $0.saved.id == saved.id }
       updated.append(Source(saved: saved, url: url))
       if urls.count == 1 && saved.isFolder == false { singleFile = url }
@@ -556,7 +630,7 @@ final class MusicLibrary {
           sources.map { SyncSource(id: $0.saved.id, url: $0.url) }, previous: index,
           forcePaths: forced)
         index = result.index
-        tracks = index.tracks
+        publish()
         pendingFileURLs = result.pendingURLs
         if observing { rebuildObservers() }
         if result.failures > 0 {
@@ -649,7 +723,9 @@ final class MusicLibrary {
   func cleanupCache(keeping filenames: Set<String>) async {
     guard !isRefreshing else { return }
     await importer.removeUnusedCopies(
-      keeping: Set(tracks.map(\.filename) + tracks.compactMap(\.artworkFilename)).union(filenames))
+      // Removed songs keep their copies so restoring them plays without another import.
+      keeping: Set(index.tracks.map(\.filename) + index.tracks.compactMap(\.artworkFilename))
+        .union(filenames))
   }
 
   private func resolveSources() {
