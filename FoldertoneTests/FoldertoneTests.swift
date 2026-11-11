@@ -483,7 +483,8 @@ enum SyncScenarios {
 
   @MainActor private static func eventually(_ condition: () -> Bool) async throws {
     let clock = ContinuousClock()
-    let deadline = clock.now.advanced(by: .seconds(8))
+    // Presenter delivery on a cold CI simulator took longer than 8 seconds (run 43073928834).
+    let deadline = clock.now.advanced(by: .seconds(20))
     while !condition() {
       if clock.now >= deadline {
         throw Failure(description: "A file change did not refresh the library")
