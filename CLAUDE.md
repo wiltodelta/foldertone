@@ -9,6 +9,7 @@ Act as a principal iOS engineer building Foldertone, a music player for files an
 - Follow `~/Documents/GitHub/claude-config/docs/ios-apps.md` for the shared native iOS appearance and accessibility conventions.
 - Follow `docs/release.md` for App Store releases; keep `Foldertone/PrivacyInfo.xcprivacy` and `docs/privacy.md` true to the code.
 - Use the checks in `README.md`; `scripts/check-engine.sh` runs shared scenarios in an isolated temporary home. Sample playback hooks are Debug-only; codec fixtures are synthetic.
+- UI tests launch the app only through their `launch` helper, which adds `--isolated-storage`, so a run on the owner's iPhone never touches the real library.
 - `scripts/check-ui.sh` boots a fresh simulator every run, and first-boot migration can exceed five minutes, so run even a focused check detached.
 - Preserve the one-screen library and native multi-selection file and folder picker. Keep file presenters active only in the foreground; background audio is separate. Use events and foreground reconciliation rather than periodic polling.
 - Validate file and folder permissions across Files providers, cloud downloads, and physical playback controls on an iPhone; simulator success does not prove these behaviors.

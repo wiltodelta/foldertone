@@ -27,7 +27,13 @@ A reported pause failure during playlist playback reproduced on an iOS 26.5 simu
 
 ## Release 1.1.0
 
-Version 1.1.0 build 2 was archived from commit `130362a` (tag `v1.1.0`) after CI passed on it, uploaded with Xcode-managed App Store signing, installed on the physical iPhone from the same archive, and submitted for App Review on 2026-11-11, set to release automatically after approval. Its archive contains the privacy manifest and a dSYM, targets iPhone only, and carries none of the Debug launch arguments, including `--library-folder`. The physical checks of the new behavior on that iPhone were requested but not yet reported.
+Build 2 was removed from review on 2026-11-11 to add swipe-to-remove. Version 1.1.0 build 2 was archived from commit `130362a` (tag `v1.1.0`) after CI passed on it, uploaded with Xcode-managed App Store signing, installed on the physical iPhone from the same archive, and submitted for App Review on 2026-11-11, set to release automatically after approval. Its archive contains the privacy manifest and a dSYM, targets iPhone only, and carries none of the Debug launch arguments, including `--library-folder`. The physical checks of the new behavior on that iPhone were requested but not yet reported.
+
+## Swipe to remove and on-device runs
+
+The library is a plain `List` so songs offer a native swipe-left Remove action; `testRowTogglesAndRemovedSongsReturn` removes a song by swiping and fails when the swipe action is missing. README screenshots captured after the change match the earlier ones in both appearances, after restoring the Play all glyph that a List label otherwise drops.
+
+UI tests launch with `--isolated-storage`. After a full simulator run, the app container held only `UITestMusic`, the `app.foldertone.uitests` defaults suite and the synthetic `Sample music` folder, with no `Music` directory or `app.foldertone.plist`. On the physical iPhone, before the List change, the row toggle, removal and restore, and single-file tests passed; the picker and search tests failed on device differences (the privacy link is exposed as a link, the picker opened in a folder without Cancel, and search stays hidden until the list is pulled down), which the tests now handle. The suite has not yet been run on the iPhone after the List change; the owner chose simulator verification for this release.
 
 ## Song taps, removed songs and the playing indicator
 

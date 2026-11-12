@@ -45,8 +45,20 @@ struct LibraryIndex: Codable, Equatable, Sendable {
 
 enum LibraryStorage {
   static let metadataVersion = 1
+  /// UI tests launch with --isolated-storage, so a run on a real iPhone keeps the owner's
+  /// sources, index, local copies and selected playlist untouched.
+  static let isolated: Bool = {
+    #if DEBUG
+      ProcessInfo.processInfo.arguments.contains("--isolated-storage")
+    #else
+      false
+    #endif
+  }()
+  static let defaults: UserDefaults =
+    isolated ? UserDefaults(suiteName: "app.foldertone.uitests")! : .standard
   static var directory: URL {
-    URL.applicationSupportDirectory.appendingPathComponent("Music", isDirectory: true)
+    URL.applicationSupportDirectory.appendingPathComponent(
+      isolated ? "UITestMusic" : "Music", isDirectory: true)
   }
   static var index: URL { directory.appendingPathComponent("library.json") }
   /// Everything here can be rebuilt from originals that stay in Files, so it skips iCloud Backup.

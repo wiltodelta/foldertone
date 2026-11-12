@@ -3,9 +3,7 @@ import XCTest
 final class FoldertoneUITests: XCTestCase {
   @MainActor
   func testSingleFileStartsPlaybackWithoutCreatingPlaylist() {
-    let app = XCUIApplication()
-    app.launchArguments = ["--empty-library", "--sample-file"]
-    app.launch()
+    let app = launch("--empty-library", "--sample-file")
     let mini = app.buttons["openPlayer"]
     XCTAssertTrue(mini.waitForExistence(timeout: 20))
     expectation(
@@ -21,25 +19,34 @@ final class FoldertoneUITests: XCTestCase {
 
   @MainActor
   func testEmptyLibraryAndMusicPicker() {
-    let app = XCUIApplication()
-    app.launchArguments = ["--empty-library"]
-    app.launch()
+    let app = launch("--empty-library")
     XCTAssertTrue(app.staticTexts["A home for your music."].waitForExistence(timeout: 10))
-    // XCTest exposes this native SwiftUI Link as a button.
-    XCTAssertTrue(app.buttons["privacyPolicy"].exists, app.debugDescription)
+    // The simulator exposes this SwiftUI Link as a button and an iPhone as a link.
+    XCTAssertTrue(
+      app.descendants(matching: .any)["privacyPolicy"].exists, app.debugDescription)
     attach(app, name: "Empty library")
     app.buttons["addMusic"].tap()
     let cancel = app.buttons["Cancel"]
-    XCTAssertTrue(cancel.waitForExistence(timeout: 10))
-    cancel.tap()
+    XCTAssertTrue(
+      cancel.waitForExistence(timeout: 10) || app.buttons["Open"].exists,
+      "The Files picker must appear")
+    if cancel.exists {
+      cancel.tap()
+    } else {
+      // On an iPhone the picker can open inside a folder without Cancel; swipe its sheet away
+      // from just above its Open button.
+      let open = app.buttons["Open"].frame
+      let window = app.coordinate(withNormalizedOffset: .zero)
+      window.withOffset(CGVector(dx: open.midX, dy: open.minY - 12)).press(
+        forDuration: 0.05,
+        thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.98)))
+    }
     XCTAssertTrue(app.staticTexts["A home for your music."].waitForExistence(timeout: 5))
   }
 
   @MainActor
   func testLibrarySearchAndPlayback() {
-    let app = XCUIApplication()
-    app.launchArguments = ["--empty-library", "--sample-library"]
-    app.launch()
+    let app = launch("--empty-library", "--sample-library")
     let first = app.buttons["track-01 - Slow morning"]
     expectation(for: NSPredicate(format: "enabled == true"), evaluatedWith: app.buttons["playAll"])
     waitForExpectations(timeout: 20)
@@ -47,6 +54,11 @@ final class FoldertoneUITests: XCTestCase {
     app.buttons["Sample music"].tap()
     attach(app, name: "Library")
     let search = app.searchFields.firstMatch
+    if !search.waitForExistence(timeout: 2) {
+      // On an iPhone the navigation bar drawer keeps search hidden until the list is pulled down.
+      app.collectionViews.firstMatch.swipeDown()
+    }
+    XCTAssertTrue(search.waitForExistence(timeout: 5))
     search.tap()
     search.typeText("After the rain")
     XCTAssertTrue(app.buttons["track-03 - After the rain"].exists)
@@ -90,17 +102,14 @@ final class FoldertoneUITests: XCTestCase {
     XCTAssertEqual(app.buttons["toggleShuffle"].value as? String, "On")
     app.navigationBars["Now playing"].buttons["Close"].tap()
     app.terminate()
-    app.launchArguments = []
-    app.launch()
+    launch(into: app)
     expectation(for: NSPredicate(format: "enabled == true"), evaluatedWith: app.buttons["playAll"])
     waitForExpectations(timeout: 10)
   }
 
   @MainActor
   func testRowTogglesAndRemovedSongsReturn() {
-    let app = XCUIApplication()
-    app.launchArguments = ["--empty-library", "--sample-library"]
-    app.launch()
+    let app = launch("--empty-library", "--sample-library")
     expectation(for: NSPredicate(format: "enabled == true"), evaluatedWith: app.buttons["playAll"])
     waitForExpectations(timeout: 20)
     app.buttons["playlistPicker"].tap()
@@ -121,8 +130,7 @@ final class FoldertoneUITests: XCTestCase {
     app.buttons["Remove from Playlist"].tap()
     XCTAssertTrue(second.waitForNonExistence(timeout: 5))
     app.terminate()
-    app.launchArguments = []
-    app.launch()
+    launch(into: app)
     XCTAssertTrue(first.waitForExistence(timeout: 15))
     XCTAssertFalse(second.exists, "A removed song must not come back after relaunch")
     app.buttons["sourceSettings"].tap()
@@ -134,6 +142,11 @@ final class FoldertoneUITests: XCTestCase {
     app.navigationBars.buttons.element(boundBy: 0).tap()
     app.buttons["Done"].tap()
     XCTAssertTrue(second.waitForExistence(timeout: 5))
+    // Swiping a song left offers the same removal.
+    let third = app.buttons["track-03 - After the rain"]
+    third.swipeLeft()
+    app.buttons["Remove"].tap()
+    XCTAssertTrue(third.waitForNonExistence(timeout: 5))
   }
 
   /// README screenshots; scripts/capture-screenshots.sh supplies the folder.
@@ -142,9 +155,7 @@ final class FoldertoneUITests: XCTestCase {
     guard let folder = ProcessInfo.processInfo.environment["FOLDERTONE_SCREENSHOT_FOLDER"] else {
       throw XCTSkip("Run through scripts/capture-screenshots.sh")
     }
-    let app = XCUIApplication()
-    app.launchArguments = ["--empty-library", "--library-folder", folder]
-    app.launch()
+    let app = launch("--empty-library", "--library-folder", folder)
     // Play all only after the whole folder is indexed, so it starts from the first track.
     XCTAssertTrue(app.staticTexts["Up to date"].waitForExistence(timeout: 30))
     app.buttons["playAll"].tap()
@@ -158,6 +169,16 @@ final class FoldertoneUITests: XCTestCase {
     XCTAssertTrue(app.navigationBars["Now playing"].waitForExistence(timeout: 5))
     sleep(2)
     attach(app, name: "player")
+  }
+
+  /// Launches with --isolated-storage, so a run on a real iPhone never touches the owner's library.
+  @MainActor @discardableResult
+  private func launch(
+    _ arguments: String..., into app: XCUIApplication = XCUIApplication()
+  ) -> XCUIApplication {
+    app.launchArguments = ["--isolated-storage"] + arguments
+    app.launch()
+    return app
   }
 
   @MainActor private func attach(_ app: XCUIApplication, name: String) {

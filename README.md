@@ -29,7 +29,7 @@ Your original files are only read, never changed.
 2. Its audio files, including every nested subfolder, appear in one flat playlist.
 3. Press **Play all**. The compact player stays at the bottom; tap it for playback position, shuffle, repeat, and the queue. Play all keeps the shuffle mode last chosen in the player.
 
-Tap the playing song to pause it and tap again to resume; touch and hold a song to play it from the beginning or remove it. A removed song stays in Files and stays out of the playlist until you restore it under Sources > Removed Songs.
+Tap the playing song to pause it and tap again to resume; touch and hold a song to play it from the beginning or remove it, or swipe it left to remove it. A removed song stays in Files and stays out of the playlist until you restore it under Sources > Removed Songs.
 
 Each connected folder has a separate playlist. Choose among them with the playlist selector. Selecting one audio file starts it playing after its local copy is ready and does not create a playlist. Audio files can also open in Foldertone through the system document-opening flow.
 
@@ -89,6 +89,8 @@ scripts/check-ui.sh
 The runner creates a unique device from an installed iOS runtime, runs without opening Simulator.app, and deletes only its own device afterward. Use `--dry-run` to inspect the selection, `--only-testing FoldertoneUITests/FoldertoneUITests/testEmptyLibraryAndMusicPicker` for a focused UI check, and `--out PATH` to retain logs and the result bundle in a chosen folder. `IOS_UI_RUNNER` overrides the shared runner path. `FoldertoneTests` covers recursive synchronization, source failures, legacy migration, cache safety, folder playlists, single-file routing, codec metadata, event delivery, shuffle, repeat, and queue reconciliation. Run `scripts/check-engine.sh` for isolated macOS engine checks using the same shared scenarios. An optional scenario name limits the check, for example `scripts/check-engine.sh formats`. It creates and removes its own temporary workspace and never uses a personal music folder. The UI tests cover the system picker and playback flows. See [verification status](docs/verification.md) for completed and blocked checks.
 
 [GitHub Actions](.github/workflows/build.yml) runs the non-UI checks on every push and pull request; the UI suite stays local because it drives the system Files picker. Check formatting locally with `xcrun swift-format lint --strict --recursive Foldertone FoldertoneTests FoldertoneUITests scripts`.
+
+UI tests launch with the Debug-only `--isolated-storage` argument, which keeps sources, the index, local copies and the selected playlist in separate test storage, so the suite can run on your own iPhone without touching its library.
 
 For a populated simulator preview, add `--sample-library` to the scheme's launch arguments. This Debug-only option creates synthetic tones without personal music or an iCloud account.
 

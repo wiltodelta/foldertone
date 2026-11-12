@@ -14,6 +14,13 @@ enum Palette {
 }
 
 extension View {
+  /// A borderless, transparent library List row with the earlier 24-point margins and width cap.
+  fileprivate func libraryRow() -> some View {
+    frame(maxWidth: 680, alignment: .leading).frame(maxWidth: .infinity)
+      .listRowInsets(EdgeInsets(top: 0, leading: 24, bottom: 0, trailing: 24))
+      .listRowBackground(Color.clear).listRowSeparator(.hidden)
+  }
+
   fileprivate func modeIndicator(_ active: Bool) -> some View {
     overlay(alignment: .bottom) {
       if active {
@@ -99,16 +106,30 @@ struct LibraryView: View {
 
   var body: some View {
     NavigationStack {
-      ScrollView {
-        VStack(alignment: .leading, spacing: 28) {
-          if library.tracks.isEmpty && library.playlists.isEmpty { emptyLibrary } else { trackList }
+      // A plain List keeps the earlier scroll layout and adds native swipe actions on songs.
+      List {
+        if library.tracks.isEmpty && library.playlists.isEmpty {
+          emptyLibrary.libraryRow().padding(.top, 16)
+        } else {
+          libraryHeader.libraryRow().padding(.top, 16).padding(.bottom, 20)
+          ForEach(filtered) { track in trackRow(track).libraryRow() }
+          if filtered.isEmpty {
+            Group {
+              if query.isEmpty && selectedPlaylist != nil {
+                ContentUnavailableView(
+                  "This playlist is empty", systemImage: "music.note.list",
+                  description: Text("Add audio files anywhere in its folder."))
+              } else {
+                ContentUnavailableView.search(text: query)
+              }
+            }
+            .libraryRow()
+          }
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 16)
-        .padding(.bottom, 28)
-        .frame(maxWidth: 680)
-        .frame(maxWidth: .infinity)
       }
+      .listStyle(.plain)
+      .scrollContentBackground(.hidden)
+      .contentMargins(.bottom, 28, for: .scrollContent)
       .background(Palette.background)
       .navigationTitle("Foldertone")
       .navigationBarTitleDisplayMode(.large)
@@ -222,7 +243,7 @@ struct LibraryView: View {
     .frame(maxWidth: .infinity).padding(.bottom, 24)
   }
 
-  private var trackList: some View {
+  private var libraryHeader: some View {
     VStack(alignment: .leading, spacing: 20) {
       HStack {
         Menu {
@@ -260,55 +281,54 @@ struct LibraryView: View {
       Button {
         player.playAll(filtered, context: playbackContext)
       } label: {
-        Label("Play all", systemImage: "play.fill").frame(maxWidth: .infinity)
+        // Inside a List a label defaults to its title alone; keep the play glyph.
+        Label("Play all", systemImage: "play.fill").labelStyle(.titleAndIcon)
+          .frame(maxWidth: .infinity)
       }
       .font(.headline).controlSize(.large).musicGlassButton(prominent: true)
       .buttonBorderShape(.capsule).disabled(filtered.isEmpty)
       .accessibilityIdentifier("playAll")
-      LazyVStack(spacing: 0) {
-        ForEach(filtered) { track in
-          let isCurrent = player.current?.id == track.id
-          Button {
-            // Tapping the current song pauses or resumes it rather than starting it again.
-            if isCurrent {
-              player.toggle()
-            } else {
-              player.play(track, in: filtered, context: playbackContext)
-            }
-          } label: {
-            TrackRow(
-              track: track,
-              playback: isCurrent ? (player.isPlaying ? .playing : .paused) : nil
-            )
-            .padding(.vertical, 11).contentShape(.rect)
-          }
-          .buttonStyle(.plain).accessibilityIdentifier("track-\(track.title)")
-          .contextMenu {
-            if isCurrent {
-              Button("Play from Beginning", systemImage: "backward.end") { player.restart() }
-            }
-            Button(
-              selectedPlaylist == nil ? "Remove from Library" : "Remove from Playlist",
-              systemImage: "minus.circle", role: .destructive
-            ) {
-              do { try library.remove(track, fromPlaylist: selectedPlaylist?.id) } catch {
-                library.errorMessage = error.localizedDescription
-              }
-            }
-          }
-        }
-      }
-      if filtered.isEmpty {
-        if query.isEmpty && selectedPlaylist != nil {
-          ContentUnavailableView(
-            "This playlist is empty", systemImage: "music.note.list",
-            description: Text("Add audio files anywhere in its folder."))
-        } else {
-          ContentUnavailableView.search(text: query)
-        }
-      }
     }
   }
+
+  private func trackRow(_ track: Track) -> some View {
+    let isCurrent = player.current?.id == track.id
+    return Button {
+      // Tapping the current song pauses or resumes it rather than starting it again.
+      if isCurrent {
+        player.toggle()
+      } else {
+        player.play(track, in: filtered, context: playbackContext)
+      }
+    } label: {
+      TrackRow(
+        track: track,
+        playback: isCurrent ? (player.isPlaying ? .playing : .paused) : nil
+      )
+      .padding(.vertical, 11).contentShape(.rect)
+    }
+    .buttonStyle(.plain).accessibilityIdentifier("track-\(track.title)")
+    .contextMenu {
+      if isCurrent {
+        Button("Play from Beginning", systemImage: "backward.end") { player.restart() }
+      }
+      Button(
+        selectedPlaylist == nil ? "Remove from Library" : "Remove from Playlist",
+        systemImage: "minus.circle", role: .destructive
+      ) { remove(track) }
+    }
+    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+      Button("Remove", systemImage: "minus.circle", role: .destructive) { remove(track) }
+    }
+  }
+
+  /// Hides a song from the selected playlist, or from every source in All music.
+  private func remove(_ track: Track) {
+    do { try library.remove(track, fromPlaylist: selectedPlaylist?.id) } catch {
+      library.errorMessage = error.localizedDescription
+    }
+  }
+
   private func openSelection(_ urls: [URL]) {
     do {
       let previous = Set(library.playlists.map(\.id))

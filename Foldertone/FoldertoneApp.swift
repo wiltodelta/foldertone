@@ -2,13 +2,14 @@ import SwiftUI
 
 @main
 struct FoldertoneApp: App {
-  @State private var library = MusicLibrary()
+  @State private var library = MusicLibrary(defaults: LibraryStorage.defaults)
   @State private var player = MusicPlayer()
   @Environment(\.scenePhase) private var scenePhase
 
   var body: some Scene {
     WindowGroup {
       LibraryView(library: library, player: player)
+        .defaultAppStorage(LibraryStorage.defaults)
         .task {
           #if DEBUG
             let arguments = ProcessInfo.processInfo.arguments
