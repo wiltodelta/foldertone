@@ -43,6 +43,13 @@ jobs:
     - name: Run engine scenarios
       run: scripts/check-engine.sh
 
+    - name: Install uv
+      uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
+    # The App Store Connect client must never write during a dry run.
+    - name: Test the App Store Connect release client
+      run: uv run --script scripts/test_asc.py
+
     # Unit tests only: the UI suite drives the system Files picker and is run
     # locally through scripts/check-ui.sh.
     - name: Run unit tests on an iPhone simulator

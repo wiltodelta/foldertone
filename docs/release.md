@@ -14,7 +14,7 @@ The procedure for shipping Foldertone. Current verification evidence lives in [v
      -archivePath "$TMPDIR/Foldertone.xcarchive"
    ```
 
-   The archive must contain `PrivacyInfo.xcprivacy` and a dSYM, and its executable must not contain `--sample-library`, `--sample-file`, or `--empty-library`.
+   The archive must contain `PrivacyInfo.xcprivacy` and a dSYM, and its executable must not contain any Debug launch argument; `scripts/release.sh` checks all three.
 4. Recheck `Foldertone/PrivacyInfo.xcprivacy` whenever the app starts using another required-reason API or any data leaves the device. File timestamps use reason `3B52.1` because the app reads only user-selected items. User defaults use `CA92.1`.
 5. Run the physical checks below on the build being submitted.
 
@@ -89,6 +89,17 @@ Capture them last, from the submitted build, using the Debug-only `--sample-libr
 
 Update `wiltodelta.com/projects/foldertone/` at every release, as `CLAUDE.md`, "Personal website", describes.
 
-## Upload
+## Upload and submit
 
-Upload from Xcode Organizer after the checks above pass on the exact archive. Tag the release only after that exact commit passes, and never reuse a tag once a build is public.
+`scripts/release.sh` runs the release through the App Store Connect API, so no Xcode or browser sign-in is needed:
+
+1. Bump `MARKETING_VERSION` or `CURRENT_PROJECT_VERSION`, commit, and push. Wait for CI to pass on that commit.
+2. Tag it: `git tag -a vX.Y.Z` with "Foldertone X.Y.Z" as the subject and the What's New text as the body, then push the tag.
+3. Run `scripts/release.sh --dry-run`. It refuses a dirty tree, a tag that is not on HEAD or not annotated, and a commit without passing CI; it first reads App Store Connect and logs every write it would make, then archives and checks the archive.
+4. Run `scripts/release.sh`, which repeats that read-only check before building, to upload, create or reuse the App Store version, write What's New from the tag, wait for processing, attach the build and prepare the review submission. Add `--submit` to send it.
+
+After the App Store releases the version, publish the GitHub release from the tag body and update the personal website as described above. Never reuse a tag once a build is public.
+
+### API key
+
+`scripts/release.sh` and `scripts/asc.py` read `ASC_KEY_ID`, `ASC_ISSUER_ID` and optionally `ASC_KEY_PATH` from `.env` (see `.env.example`). The key is the App Store Connect team key "Foldertone release admin" with the Admin role, created under Users and Access > Integrations > Team Keys; an App Manager key reads and prepares versions but fails App Store export with "Cloud signing permission error", so the Admin role is required for signing and upload; its `.p8` file lives at `~/.appstoreconnect/private_keys/AuthKey_<ASC_KEY_ID>.p8` with mode 600 and never enters the repository. `uv run --script scripts/asc.py check` confirms that the key can read the app. `uv run --script scripts/test_asc.py`, also run by CI, proves that a dry run sends no writes and that only `--submit` sends the submission.

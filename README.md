@@ -113,7 +113,7 @@ Apple references: [file presenters](https://developer.apple.com/documentation/fo
 
 ### Release
 
-See the [App Store release procedure](docs/release.md) and the [privacy policy](docs/privacy.md).
+`scripts/release.sh` archives, uploads and prepares a tagged release through the App Store Connect API; see the [App Store release procedure](docs/release.md) and the [privacy policy](docs/privacy.md).
 
 ## Help
 

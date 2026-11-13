@@ -7,6 +7,7 @@ Act as a principal iOS engineer building Foldertone, a music player for files an
 - `FolderImporter` persists per-source synchronization snapshots and coordinates read-only access. `MusicLibrary` owns observable library state; `MusicPlayer` owns AVPlayer and remote commands.
 - Follow `docs/product.md` for folder playlists, single-file playback, metadata, and queue behavior.
 - Follow `~/Documents/GitHub/claude-config/docs/ios-apps.md` for the shared native iOS appearance and accessibility conventions.
+- Release with `scripts/release.sh` through the App Store Connect API key; the key's `.p8` stays in `~/.appstoreconnect/private_keys/` and its IDs in the ignored `.env`, never in the public repository.
 - Follow `docs/release.md` for App Store releases; keep `Foldertone/PrivacyInfo.xcprivacy` and `docs/privacy.md` true to the code.
 - Use the checks in `README.md`; `scripts/check-engine.sh` runs shared scenarios in an isolated temporary home. Sample playback hooks are Debug-only; codec fixtures are synthetic.
 - UI tests launch the app only through their `launch` helper, which adds `--isolated-storage`, so a run on the owner's iPhone never touches the real library.
