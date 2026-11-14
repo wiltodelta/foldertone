@@ -50,6 +50,10 @@ jobs:
     - name: Test the App Store Connect release client
       run: uv run --script scripts/test_asc.py
 
+    # Publishing the GitHub release must never write during a dry run either.
+    - name: Test the GitHub release publisher
+      run: uv run --script scripts/test_publish_release.py
+
     # Unit tests only: the UI suite drives the system Files picker and is run
     # locally through scripts/check-ui.sh.
     - name: Run unit tests on an iPhone simulator

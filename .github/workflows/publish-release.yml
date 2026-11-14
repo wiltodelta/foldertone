@@ -1,0 +1,31 @@
+name: Publish GitHub release
+
+# The App Store releases a version after review, at a time no local step
+# controls, so this checks the live App Store version on a schedule and
+# publishes the GitHub release from its annotated tag once that version is out.
+on:
+  schedule:
+    - cron: '23 */3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
+    - name: Publish the release for the live App Store version
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: uv run --script scripts/publish_release.py

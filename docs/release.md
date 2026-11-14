@@ -98,7 +98,9 @@ Update `wiltodelta.com/projects/foldertone/` at every release, as `CLAUDE.md`, "
 3. Run `scripts/release.sh --dry-run`. It refuses a dirty tree, a tag that is not on HEAD or not annotated, and a commit without passing CI; it first reads App Store Connect and logs every write it would make, then archives and checks the archive.
 4. Run `scripts/release.sh`, which repeats that read-only check before building, to upload, create or reuse the App Store version, write What's New from the tag, wait for processing, attach the build and prepare the review submission. Add `--submit` to send it.
 
-After the App Store releases the version, publish the GitHub release from the tag body and update the personal website as described above. Never reuse a tag once a build is public.
+The GitHub release follows the App Store on its own: `.github/workflows/publish-release.yml` runs every three hours, reads the live version from the public iTunes Lookup API, and when tag `vX.Y.Z` has no GitHub release yet, `scripts/publish_release.py` publishes one titled with the tag subject and described by the tag body. It needs no App Store Connect key. Run it at once from the Actions tab (`gh workflow run publish-release.yml`), or locally with `GH_TOKEN=$(gh auth token) uv run --script scripts/publish_release.py --dry-run`. A failed run means the live version has no annotated tag. `scripts/release.sh` re-enables the workflow after an upload, because GitHub disables a public repository's schedules after 60 days without activity.
+
+Once the GitHub release exists, update the personal website as described above. Never reuse a tag once a build is public.
 
 ### API key
 

@@ -88,6 +88,9 @@ EOF
   xcodebuild -exportArchive -archivePath "$WORK/Foldertone.xcarchive" \
     -exportOptionsPlist "$WORK/ExportOptions.plist" -exportPath "$WORK/export" "${AUTH[@]}"
   asc
+  # GitHub disables a public repository's scheduled workflows after 60 days
+  # without activity; the release is published only once the App Store sells it.
+  gh workflow enable publish-release.yml
 else
   echo "Dry run: archive checked, upload and App Store Connect writes skipped"
 fi
