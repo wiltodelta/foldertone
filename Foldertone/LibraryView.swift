@@ -235,6 +235,8 @@ struct LibraryView: View {
           Task { await library.refresh() }
         }
       }
+      // A List row restyles a bare label; keep the glyph beside the title.
+      .labelStyle(.titleAndIcon)
       .font(.headline).musicGlassButton(prominent: true).buttonBorderShape(.capsule)
       .controlSize(.large).disabled(library.isRefreshing)
       Link("Privacy Policy", destination: AppLinks.privacy)
