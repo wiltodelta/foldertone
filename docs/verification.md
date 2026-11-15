@@ -27,7 +27,7 @@ A reported pause failure during playlist playback reproduced on an iOS 26.5 simu
 
 ## Release 1.1.1
 
-Build 1, archived by `scripts/release.sh` from commit `2034eff` (tag `v1.1.1`) after CI passed on it, was uploaded, processed as valid and submitted for App Review on 2026-11-14, set to release automatically after approval. It carries only the empty library button glyph fix. The physical checks in `release.md` were not run for this build.
+Build 1, archived by `scripts/release.sh` from commit `2034eff` (tag `v1.1.1`) after CI passed on it, was uploaded, processed as valid and submitted for App Review on 2026-11-14, set to release automatically after approval, and the App Store released it on 2026-11-15. It carries only the empty library button glyph fix. The scheduled workflow published GitHub release `v1.1.1` eleven minutes after the App Store release date the lookup reports, and the site's release refresh deployed it in its next run, about five hours later, because GitHub skipped most scheduled runs that day. The physical checks in `release.md` were not run for this build.
 
 ## Release 1.1.0
 
