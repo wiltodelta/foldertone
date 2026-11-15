@@ -87,7 +87,7 @@ Capture them last, from the submitted build, using the Debug-only `--sample-libr
 
 ## Personal website
 
-Update `wiltodelta.com/projects/foldertone/` at every release, as `CLAUDE.md`, "Personal website", describes.
+`wiltodelta.com/projects/foldertone/` deploys the release's screenshots and README section by itself within three hours of the GitHub release. Regenerate those screenshots before tagging when the pictured UI changed, as `CLAUDE.md`, "Personal website", describes; catalog copy on the site still changes by hand.
 
 ## Upload and submit
 
@@ -100,7 +100,7 @@ Update `wiltodelta.com/projects/foldertone/` at every release, as `CLAUDE.md`, "
 
 The GitHub release follows the App Store on its own: `.github/workflows/publish-release.yml` runs every three hours, reads the live version from the public iTunes Lookup API, and when tag `vX.Y.Z` has no GitHub release yet, `scripts/publish_release.py` publishes one titled with the tag subject and described by the tag body. It needs no App Store Connect key. Run it at once from the Actions tab (`gh workflow run publish-release.yml`), or locally with `GH_TOKEN=$(gh auth token) uv run --script scripts/publish_release.py --dry-run`. A failed run means the live version has no annotated tag. `scripts/release.sh` re-enables the workflow after an upload, because GitHub disables a public repository's schedules after 60 days without activity.
 
-Once the GitHub release exists, update the personal website as described above. Never reuse a tag once a build is public.
+The personal website then follows on its own, as described above. Never reuse a tag once a build is public.
 
 ### API key
 
