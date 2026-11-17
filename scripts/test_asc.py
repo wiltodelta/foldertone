@@ -27,7 +27,7 @@ class FakeResponse(io.BytesIO):
         return False
 
 
-def fake_api(calls, existing_version, earlier_versions=True):
+def fake_api(calls, existing_version, earlier_versions=True, open_items=None):
     def urlopen(request, timeout):
         path = request.full_url.removeprefix(asc.API)
         calls.append((request.get_method(), path))
@@ -45,7 +45,9 @@ def fake_api(calls, existing_version, earlier_versions=True):
         elif path.startswith("/v1/builds?"):
             body = {"data": [{"id": "build1", "attributes": {"processingState": "VALID"}}]}
         elif path.startswith("/v1/reviewSubmissions?"):
-            body = {"data": []}
+            body = {"data": [{"id": "sub1"}] if open_items is not None else []}
+        elif path.startswith("/v1/reviewSubmissions/sub1/items?"):
+            body = {"data": open_items}
         else:
             body = {"data": {"id": "new1", "attributes": {}}}
         return FakeResponse(json.dumps(body).encode())
@@ -89,6 +91,18 @@ def test_whats_new_only_after_first_version(monkeypatch, client_factory, earlier
     asc.release(client_factory(False), "1.2.0", "4", "Notes", submit=False, timeout=1)
     wrote = ("PATCH", "/v1/appStoreVersionLocalizations/loc1") in calls
     assert wrote == earlier_versions
+
+
+@pytest.mark.parametrize("has_version", [True, False])
+def test_reused_submission_gets_the_version(monkeypatch, client_factory, has_version):
+    calls = []
+    item = {"id": "item1", "relationships": {"appStoreVersion": {"data": {"type": "appStoreVersions", "id": "ver1"}}}}
+    monkeypatch.setattr(asc.urllib.request, "urlopen", fake_api(calls, True, open_items=[item] if has_version else []))
+    asc.release(client_factory(False), "1.2.0", "4", "Notes", submit=True, timeout=1)
+    added = ("POST", "/v1/reviewSubmissionItems") in calls
+    assert added == (not has_version)
+    assert ("POST", "/v1/reviewSubmissions") not in calls
+    assert ("PATCH", "/v1/reviewSubmissions/sub1") in calls
 
 
 def test_released_version_is_refused(monkeypatch, client_factory):

@@ -36,6 +36,7 @@ An Account Holder or Admin completes these once:
 - Register the explicit bundle ID `com.wiltodelta.foldertone` and create the app record; [verification.md](verification.md) records why the earlier `app.foldertone` record was retired.
 - Sign with Xcode-managed distribution: an export with `-allowProvisioningUpdates` uses a cloud-managed Apple Distribution certificate, so no local distribution identity is needed.
 - Complete agreements and EU trader status. Foldertone 1.0 is a free, iPhone-only app.
+- China mainland stays unavailable until the Security Assessment and the AI-generated content declaration in App Compliance are filed; without them App Store Connect refuses to submit a version available there.
 - Answer Content Rights, the age rating questionnaire, and App Privacy data collection yourself: they are legal declarations of the account holder, so an agent fills the rest of the listing but not these. An agent pressed Submit for Review for 1.1.0 at the account holder's explicit request; for 1.0.0 the account holder pressed it.
 - Keep the policy from `docs/privacy.md` live at `https://wiltodelta.com/projects/foldertone/privacy/` and the support page at `https://wiltodelta.com/projects/foldertone/support/`. Both are served by the `wiltodelta-app` site and linked from the app's empty library and Sources sheet, as Guideline 5.1.1 requires.
 

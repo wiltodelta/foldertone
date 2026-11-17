@@ -178,8 +178,10 @@ def prepare_submission(client: Client, app: str, version_id: str, submit: bool) 
         "/v1/reviewSubmissions",
         **{"filter[app]": app, "filter[platform]": "IOS", "filter[state]": "READY_FOR_REVIEW"},
     )["data"]
+    items = []
     if open_submissions:
         submission = open_submissions[0]["id"]
+        items = client.get(f"/v1/reviewSubmissions/{submission}/items", include="appStoreVersion")["data"]
     else:
         submission = client.request(
             "POST",
@@ -192,6 +194,11 @@ def prepare_submission(client: Client, app: str, version_id: str, submit: bool) 
                 }
             },
         )["data"]["id"]
+    # A run that failed after creating the submission leaves it without the version.
+    if not any(
+        (item["relationships"].get("appStoreVersion", {}).get("data") or {}).get("id") == version_id
+        for item in items
+    ):
         client.request(
             "POST",
             "/v1/reviewSubmissionItems",
