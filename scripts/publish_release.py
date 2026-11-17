@@ -23,7 +23,7 @@ import urllib.error
 import urllib.request
 
 log = logging.getLogger("publish_release")
-BUNDLE_ID = "app.foldertone"
+BUNDLE_ID = "com.wiltodelta.foldertone"
 LOOKUP = f"https://itunes.apple.com/lookup?bundleId={BUNDLE_ID}"
 API = "https://api.github.com"
 DEFAULT_REPOSITORY = "wiltodelta/foldertone"

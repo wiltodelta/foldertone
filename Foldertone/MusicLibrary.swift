@@ -43,6 +43,12 @@ struct LibraryIndex: Codable, Equatable, Sendable {
   }
 }
 
+extension Logger {
+  /// The bundle identifier, so a rename touches only the build setting; the engine check runs
+  /// without an app bundle and uses the shipping identifier.
+  static let subsystem = Bundle.main.bundleIdentifier ?? "com.wiltodelta.foldertone"
+}
+
 enum LibraryStorage {
   static let metadataVersion = 1
   /// UI tests launch with --isolated-storage, so a run on a real iPhone keeps the owner's
@@ -55,7 +61,7 @@ enum LibraryStorage {
     #endif
   }()
   static let defaults: UserDefaults =
-    isolated ? UserDefaults(suiteName: "app.foldertone.uitests")! : .standard
+    isolated ? UserDefaults(suiteName: "\(Logger.subsystem).uitests")! : .standard
   static var directory: URL {
     URL.applicationSupportDirectory.appendingPathComponent(
       isolated ? "UITestMusic" : "Music", isDirectory: true)
@@ -107,7 +113,7 @@ struct SyncResult: Sendable {
 }
 
 actor FolderImporter {
-  private let log = Logger(subsystem: "app.foldertone", category: "Sync")
+  private let log = Logger(subsystem: Logger.subsystem, category: "Sync")
   private var isSynchronizing = false
   private var requestedDownloads: Set<String> = []
   func retryDownloads() { requestedDownloads.removeAll() }
@@ -400,7 +406,7 @@ final class MusicLibrary {
   private var index = LibraryIndex()
   @ObservationIgnored private let defaults: UserDefaults
   @ObservationIgnored private let importer = FolderImporter()
-  @ObservationIgnored private let log = Logger(subsystem: "app.foldertone", category: "Library")
+  @ObservationIgnored private let log = Logger(subsystem: Logger.subsystem, category: "Library")
   @ObservationIgnored private var refreshRequested = false
   @ObservationIgnored private var observing = false
   @ObservationIgnored private var observers: [String: SourceObserver] = [:]

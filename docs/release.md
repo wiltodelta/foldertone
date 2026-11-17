@@ -33,7 +33,7 @@ These depend on real hardware and accounts, so simulator results do not count.
 
 An Account Holder or Admin completes these once:
 
-- Register the explicit bundle ID `app.foldertone` and create the app record.
+- Register the explicit bundle ID `com.wiltodelta.foldertone` and create the app record; [verification.md](verification.md) records why the earlier `app.foldertone` record was retired.
 - Sign with Xcode-managed distribution: an export with `-allowProvisioningUpdates` uses a cloud-managed Apple Distribution certificate, so no local distribution identity is needed.
 - Complete agreements and EU trader status. Foldertone 1.0 is a free, iPhone-only app.
 - Answer Content Rights, the age rating questionnaire, and App Privacy data collection yourself: they are legal declarations of the account holder, so an agent fills the rest of the listing but not these. An agent pressed Submit for Review for 1.1.0 at the account holder's explicit request; for 1.0.0 the account holder pressed it.
@@ -96,7 +96,7 @@ Capture them last, from the submitted build, using the Debug-only `--sample-libr
 1. Bump `MARKETING_VERSION` or `CURRENT_PROJECT_VERSION`, commit, and push. Wait for CI to pass on that commit.
 2. Tag it: `git tag -a vX.Y.Z` with "Foldertone X.Y.Z" as the subject and the What's New text as the body, then push the tag.
 3. Run `scripts/release.sh --dry-run`. It refuses a dirty tree, a tag that is not on HEAD or not annotated, and a commit without passing CI; it first reads App Store Connect and logs every write it would make, then archives and checks the archive.
-4. Run `scripts/release.sh`, which repeats that read-only check before building, to upload, create or reuse the App Store version, write What's New from the tag, wait for processing, attach the build and prepare the review submission. Add `--submit` to send it.
+4. Run `scripts/release.sh`, which repeats that read-only check before building, to upload, create or reuse the App Store version, write What's New from the tag (App Store Connect has none for an app's first version, so it is skipped there), wait for processing, attach the build and prepare the review submission. Add `--submit` to send it.
 
 The GitHub release follows the App Store on its own: `.github/workflows/publish-release.yml` runs on the schedule in its `cron` line (GitHub delays and skips scheduled runs, so the wait varies), reads the live version from the public iTunes Lookup API, and when tag `vX.Y.Z` has no GitHub release yet, `scripts/publish_release.py` publishes one titled with the tag subject and described by the tag body. It needs no App Store Connect key. Run it at once from the Actions tab (`gh workflow run publish-release.yml`), or locally with `GH_TOKEN=$(gh auth token) uv run --script scripts/publish_release.py --dry-run`. A failed run means the live version has no annotated tag. `scripts/release.sh` re-enables the workflow after an upload, because GitHub disables a public repository's schedules after 60 days without activity.
 

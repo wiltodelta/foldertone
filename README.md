@@ -9,7 +9,7 @@ subfolders in one flat list.
 Add, rename, move or delete music in that folder and the playlist follows.
 Your original files are only read, never changed.
 
-[**Download on the App Store**](https://apps.apple.com/app/foldertone/id6832760685)
+[**Download on the App Store**](https://apps.apple.com/app/foldertone/id6835675011)
  · iOS 17+ · iPhone
  · [Website](https://wiltodelta.com/projects/foldertone/)
  · by [Victor Kuznetsov](https://wiltodelta.com/)
@@ -45,7 +45,7 @@ The app supports multiple files and folders from On My iPhone, iCloud Drive, and
 ## Install
 
 Get Foldertone free from the
-[App Store](https://apps.apple.com/app/foldertone/id6832760685). It needs an
+[App Store](https://apps.apple.com/app/foldertone/id6835675011). It needs an
 iPhone with iOS 17 or later. Tap **+**, choose a folder or songs in Files, and
 press **Play all**.
 

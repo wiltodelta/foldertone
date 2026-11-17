@@ -19,7 +19,7 @@ final class MusicPlayer {
   @ObservationIgnored private var observation: NSKeyValueObservation?
   @ObservationIgnored private var itemObservation: NSKeyValueObservation?
   @ObservationIgnored private var endObserver: NSObjectProtocol?
-  @ObservationIgnored private let log = Logger(subsystem: "app.foldertone", category: "Playback")
+  @ObservationIgnored private let log = Logger(subsystem: Logger.subsystem, category: "Playback")
 
   init() {
     observation = player.observe(\.timeControlStatus, options: [.new]) { [weak self] player, _ in

@@ -27,7 +27,7 @@ class FakeResponse(io.BytesIO):
         return False
 
 
-def fake_api(calls, existing_version):
+def fake_api(calls, existing_version, earlier_versions=True):
     def urlopen(request, timeout):
         path = request.full_url.removeprefix(asc.API)
         calls.append((request.get_method(), path))
@@ -37,6 +37,9 @@ def fake_api(calls, existing_version):
             state = "READY_FOR_SALE" if existing_version == "released" else "PREPARE_FOR_SUBMISSION"
             version = {"id": "ver1", "attributes": {"versionString": "1.2.0", "appStoreState": state}}
             body = {"data": [version] if existing_version else []}
+            if earlier_versions and "versionString" not in path:
+                earlier = {"id": "ver0", "attributes": {"versionString": "1.1.1", "appStoreState": "READY_FOR_SALE"}}
+                body["data"].append(earlier)
         elif "appStoreVersionLocalizations" in path:
             body = {"data": [{"id": "loc1"}]}
         elif path.startswith("/v1/builds?"):
@@ -77,6 +80,15 @@ def test_submit_flag_controls_sending(monkeypatch, client_factory):
         sent = ("PATCH", "/v1/reviewSubmissions/new1") in calls
         assert sent == submit
         assert ("PATCH", "/v1/appStoreVersions/ver1/relationships/build") in calls
+
+
+@pytest.mark.parametrize("earlier_versions", [True, False])
+def test_whats_new_only_after_first_version(monkeypatch, client_factory, earlier_versions):
+    calls = []
+    monkeypatch.setattr(asc.urllib.request, "urlopen", fake_api(calls, True, earlier_versions))
+    asc.release(client_factory(False), "1.2.0", "4", "Notes", submit=False, timeout=1)
+    wrote = ("PATCH", "/v1/appStoreVersionLocalizations/loc1") in calls
+    assert wrote == earlier_versions
 
 
 def test_released_version_is_refused(monkeypatch, client_factory):

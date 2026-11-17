@@ -28,7 +28,7 @@ import jwt
 
 log = logging.getLogger("asc")
 API = "https://api.appstoreconnect.apple.com"
-BUNDLE_ID = "app.foldertone"
+BUNDLE_ID = "com.wiltodelta.foldertone"
 LOCALE = "en-US"
 # Stands in for the IDs of objects a dry run does not create.
 DRY_RUN_ID = "dry-run"
@@ -115,6 +115,11 @@ def find_or_create_version(client: Client, app: str, version: str) -> str:
         },
     )
     return created["data"]["id"]
+
+
+def first_version(client: Client, app: str, version: str) -> bool:
+    versions = client.get(f"/v1/apps/{app}/appStoreVersions", **{"filter[platform]": "IOS"})["data"]
+    return all(v["attributes"]["versionString"] == version for v in versions)
 
 
 def set_whats_new(client: Client, version_id: str, text: str) -> None:
@@ -214,7 +219,10 @@ def prepare_submission(client: Client, app: str, version_id: str, submit: bool) 
 def release(client: Client, version: str, build: str, whats_new: str, submit: bool, timeout: int) -> None:
     app = app_id(client)
     version_id = find_or_create_version(client, app, version)
-    set_whats_new(client, version_id, whats_new)
+    if first_version(client, app, version):
+        log.info("Version %s is the app's first, which has no What's New; skipping it", version)
+    else:
+        set_whats_new(client, version_id, whats_new)
     build_id = wait_for_build(client, app, version, build, timeout)
     client.request(
         "PATCH",
