@@ -15,6 +15,7 @@ import Foundation
       let cases: [(String, @MainActor () async throws -> Void)] = [
         ("events", { try await SyncScenarios.eventDrivenChanges() }),
         ("formats", { try await SyncScenarios.formatsAndMetadata() }),
+        ("encodings", { try await SyncScenarios.tagEncodings() }),
         ("queue", { try SyncScenarios.playbackOrder() }),
         ("recursive", { try await SyncScenarios.recursiveChanges() }),
         ("unavailable", { try await SyncScenarios.unavailableSource() }),

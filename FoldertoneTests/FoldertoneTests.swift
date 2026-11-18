@@ -13,6 +13,9 @@ import ImageIO
     func testFormatsAndEmbeddedMetadata() async throws {
       try await SyncScenarios.formatsAndMetadata()
     }
+    func testLegacyTagEncodingsAreDecoded() async throws {
+      try await SyncScenarios.tagEncodings()
+    }
     func testShuffleRepeatAndQueueReconciliation() throws { try SyncScenarios.playbackOrder() }
 
     func testRecursiveSyncHandlesAddDeleteRenameMoveAndReplace() async throws {
@@ -561,17 +564,20 @@ enum SyncScenarios {
     }
   }
 
-  static func formatsAndMetadata() async throws {
-    let fixtures: URL
+  private static func fixturesDirectory() throws -> URL {
     #if SYNC_STANDALONE
-      fixtures = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent(
+      return URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent(
         "Fixtures", isDirectory: true)
     #else
       guard let resources = Bundle(for: FoldertoneTests.self).resourceURL else {
         throw Failure(description: "Missing test bundle")
       }
-      fixtures = resources.appendingPathComponent("Fixtures", isDirectory: true)
+      return resources.appendingPathComponent("Fixtures", isDirectory: true)
     #endif
+  }
+
+  static func formatsAndMetadata() async throws {
+    let fixtures = try fixturesDirectory()
     let rawFlac = try Data(contentsOf: fixtures.appendingPathComponent("FLAC.flac"))
     let image = try FlacArtwork.embeddedImage(in: rawFlac)
     guard let image,
@@ -610,6 +616,119 @@ enum SyncScenarios {
             atPath: LibraryStorage.directory.appendingPathComponent($0).path)
         } == true, "Embedded cover must be decoded for " + format)
     }
+  }
+
+  static func tagEncodings() async throws {
+    let code = TagText.encoding
+    // Real titles, artists and code pages, as old taggers wrote them.
+    let samples: [(String, String, String.Encoding)] = [
+      ("Мне не хватает тебя", "БАСТА", .windowsCP1251),
+      ("Группа крови", "Кино", code(.KOI8_R)),
+      ("Червона рута", "Софія Ротару", .windowsCP1251),
+      ("Συννεφιασμένη Κυριακή", "Τσιτσάνης", .windowsCP1253),
+      ("ירושלים של זהב", "נעמי שמר", code(.windowsHebrew)),
+      ("أنت عمري", "أم كلثوم", code(.windowsArabic)),
+      ("ลาวดวงเดือน", "สุนทราภรณ์", code(.dosThai)),
+      ("夜に駆ける", "YOASOBI", code(.dosJapanese)),
+      ("月亮代表我的心", "邓丽君", code(.GB_18030_2000)),
+      ("月亮代表我的心", "鄧麗君", code(.dosChineseTrad)),
+      ("아리랑", "조용필", code(.dosKorean)),
+      ("Żółta łódź", "Czesław Niemen", .windowsCP1250),
+      ("Szomorú vasárnap", "Seress Rezső", .windowsCP1250),
+      ("Şımarık", "Tarkan", .windowsCP1254),
+      ("Ąžuolai žaliuos", "Žalvarinis", code(.windowsBalticRim)),
+      ("Мне не хватает тебя", "Баста", .utf8),
+    ]
+    let western = [
+      "Beyoncé", "Mötley Crüe", "Naïve", "Øresund", "50 € Song", "Æon", "Ü", "Crème brûlée",
+      "Señorita", "Don’t Stop", "Sigur Rós", "São Paulo", "Été",
+    ]
+    for languages in [["en"], ["ru"], ["ja"], ["zh-Hant"], ["ko"], ["pl"]] {
+      for (title, artist, encoding) in samples {
+        guard let titleBytes = title.data(using: encoding),
+          let artistBytes = artist.data(using: encoding)
+        else { throw Failure(description: "Sample \(title) cannot be encoded") }
+        try check(
+          TagText.decode([titleBytes, artistBytes], languages: languages) == [title, artist],
+          "\(title) must be decoded for \(languages)")
+      }
+      for title in western {
+        guard let bytes = title.data(using: .windowsCP1252) else { continue }
+        try check(
+          TagText.decode([bytes, bytes], languages: languages) == [title, title]
+            && TagText.repair([title], languages: languages) == [title],
+          "Western text \(title) must stay unchanged for \(languages)")
+      }
+    }
+    // Text that was misread as Latin-1 before an app stored it as Unicode.
+    try check(
+      TagText.repair(["Ìíå íå õâàòàåò òåáÿ", "ÁÀÑÒÀ"], languages: ["en"])
+        == ["Мне не хватает тебя", "БАСТА"], "Stored Latin-1 gibberish must be repaired")
+
+    let cyrillic = { (text: String) in text.data(using: .windowsCP1251)! }
+    // End to end: MP3 files tagged in legacy code pages import with readable text.
+    let mp3 = try Data(contentsOf: try fixturesDirectory().appendingPathComponent("MP3.mp3"))
+    let audio = mp3.dropFirst(10 + (6..<10).reduce(0) { $0 << 7 | Int(mp3[$1]) })
+    let root = FileManager.default.temporaryDirectory.appendingPathComponent(
+      "FoldertoneEncodings-\(UUID().uuidString)", isDirectory: true)
+    try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: root) }
+    let japanese = code(.dosJapanese)
+    try
+      (id3(
+        version: 3,
+        frames: [
+          ("TIT2", Data([0]) + cyrillic("Мне не хватает тебя")),
+          ("TPE1", Data([0]) + cyrillic("БАСТА")),
+          ("TALB", Data([0]) + cyrillic("Баста 4")),
+        ]) + audio).write(to: root.appendingPathComponent("Cyrillic.mp3"))
+    try
+      (id3(
+        version: 3,
+        frames: [
+          ("TIT2", Data([0]) + "夜に駆ける".data(using: japanese)!),
+          ("TPE1", Data([0]) + Data("YOASOBI".utf8)),
+        ]) + audio).write(to: root.appendingPathComponent("Japanese.mp3"))
+    let latin = "Café del Mar".data(using: .windowsCP1252)!
+    try (audio + id3v1(title: latin, artist: Data("Energy 52".utf8), album: Data()))
+      .write(to: root.appendingPathComponent("Western.mp3"))
+    let result = try await FolderImporter().synchronize(
+      [SyncSource(id: "encodings", url: root)], previous: LibraryIndex())
+    try check(result.failures == 0 && result.index.tracks.count == 3, "Tagged MP3s must import")
+    let russian = try track("Мне не хватает тебя", in: result.index)
+    try check(
+      russian.artist == "БАСТА" && russian.album == "Баста 4",
+      "Windows-1251 ID3v2.3 frames must be decoded")
+    try check(
+      try track("夜に駆ける", in: result.index).artist == "YOASOBI",
+      "Shift-JIS ID3v2.3 frames must be decoded")
+    try check(
+      try track("Café del Mar", in: result.index).artist == "Energy 52",
+      "Western ID3v1 text must stay unchanged")
+  }
+
+  /// An ID3v2 tag with the given frames.
+  private static func id3(version: UInt8, frames: [(String, Data)]) -> Data {
+    func size(_ value: Int, syncsafe: Bool) -> Data {
+      Data(
+        (0..<4).reversed().map {
+          UInt8((value >> ($0 * (syncsafe ? 7 : 8))) & (syncsafe ? 0x7F : 0xFF))
+        })
+    }
+    var body = Data()
+    for (id, content) in frames {
+      body += Data(id.utf8) + size(content.count, syncsafe: version == 4) + Data([0, 0]) + content
+    }
+    return Data("ID3".utf8) + Data([version, 0, 0]) + size(body.count, syncsafe: true) + body
+  }
+
+  /// An ID3v1 tag, which has no encoding field at all.
+  private static func id3v1(title: Data, artist: Data, album: Data) -> Data {
+    let pad = { (data: Data) in
+      data.prefix(30) + Data(repeating: 0, count: 30 - min(30, data.count))
+    }
+    return Data("TAG".utf8) + pad(title) + pad(artist) + pad(album) + Data("2000".utf8)
+      + Data(repeating: 0, count: 30) + Data([0xFF])
   }
 
   static func playbackOrder() throws {

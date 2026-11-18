@@ -10,6 +10,7 @@ Act as a principal iOS engineer building Foldertone, a music player for files an
 - Release with `scripts/release.sh` through the App Store Connect API key; the key's `.p8` stays in `~/.appstoreconnect/private_keys/` and its IDs in the ignored `.env`, never in the public repository.
 - Never publish a GitHub release by hand: the scheduled `publish-release.yml` workflow publishes it from the tag once the App Store sells that version, and the website deploys its screenshots and README section by itself on its next scheduled refresh.
 - Follow `docs/release.md` for App Store releases; keep `Foldertone/PrivacyInfo.xcprivacy` and `docs/privacy.md` true to the code.
+- A new source file needs a file reference, build file, group entry and sources-phase entry in `Foldertone.xcodeproj/project.pbxproj`, and a line in `scripts/check-engine.sh` when the shared scenarios compile it.
 - Use the checks in `README.md`; `scripts/check-engine.sh` runs shared scenarios in an isolated temporary home. Sample playback hooks are Debug-only; codec fixtures are synthetic.
 - UI tests launch the app only through their `launch` helper, which adds `--isolated-storage`, so a run on the owner's iPhone never touches the real library.
 - `scripts/check-ui.sh` boots a fresh simulator every run, and first-boot migration can exceed five minutes, so run even a focused check detached.

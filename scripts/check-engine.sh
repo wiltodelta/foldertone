@@ -16,6 +16,7 @@ xcrun swiftc -D DEBUG -D SYNC_STANDALONE -parse-as-library \
   "$PROJECT_ROOT/Foldertone/SourceObserver.swift" \
   "$PROJECT_ROOT/Foldertone/PlaybackQueue.swift" \
   "$PROJECT_ROOT/Foldertone/SampleLibrary.swift" \
+  "$PROJECT_ROOT/Foldertone/TagText.swift" \
   "$PROJECT_ROOT/FoldertoneTests/FoldertoneTests.swift" \
   "$PROJECT_ROOT/scripts/CheckEngine.swift" \
   -o "$TASK_DIR/check-engine"

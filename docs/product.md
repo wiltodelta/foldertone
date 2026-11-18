@@ -51,4 +51,4 @@ File presenters are active only in the foreground. A foreground reconciliation c
 
 ## Format handling
 
-AVFoundation performs decoding. Synthetic MP3, FLAC, AAC/M4A, ALAC, WAV, and AIFF fixtures exercise the importer, with embedded title, artist, album, and artwork in the tagged formats. A filename and built-in image cover missing metadata. Source failures are reported rather than silently presented as a successful empty playlist.
+AVFoundation performs decoding. Synthetic MP3, FLAC, AAC/M4A, ALAC, WAV, and AIFF fixtures exercise the importer, with embedded title, artist, album, and artwork in the tagged formats. A filename and built-in image cover missing metadata. Title, artist and album written in a legacy code page are decoded on the device: `TagText` scores each candidate code page by how word-like its reading is in its own script, uses the on-device language recognizer only to choose among code pages of the same alphabet, and keeps a Western reading unless another is clearly better. Raising `LibraryStorage.metadataVersion` makes existing tracks reread their tags. Source failures are reported rather than silently presented as a successful empty playlist.

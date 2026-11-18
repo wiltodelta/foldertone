@@ -50,7 +50,8 @@ extension Logger {
 }
 
 enum LibraryStorage {
-  static let metadataVersion = 1
+  /// Raising it rereads every track's tags; 2 decodes legacy code pages.
+  static let metadataVersion = 2
   /// UI tests launch with --isolated-storage, so a run on a real iPhone keeps the owner's
   /// sources, index, local copies and selected playlist untouched.
   static let isolated: Bool = {
@@ -282,26 +283,29 @@ actor FolderImporter {
         guard try await asset.load(.isPlayable) else { throw CocoaError(.fileReadCorruptFile) }
         let duration = try await asset.load(.duration).seconds
         let metadata = try await asset.load(.metadata)
-        var title = url.deletingPathExtension().lastPathComponent
-        var artist = "Unknown artist"
-        var album: String?
+        var tagged: [String?] = [nil, nil, nil]
         var artworkFilename: String?
         for item in metadata {
-          if item.commonKey == .commonKeyTitle, let value = try? await item.load(.stringValue),
+          let field = [.commonKeyTitle, .commonKeyArtist, .commonKeyAlbumName].firstIndex {
+            $0 == item.commonKey
+          }
+          if let field, let value = try? await item.load(.stringValue),
             !value.isEmpty
           {
-            title = value
+            tagged[field] = value
           }
-          if item.commonKey == .commonKeyArtist, let value = try? await item.load(.stringValue),
-            !value.isEmpty
-          {
-            artist = value
-          }
-          if item.commonKey == .commonKeyAlbumName { album = try? await item.load(.stringValue) }
           if item.commonKey == .commonKeyArtwork, let imageData = try? await item.load(.dataValue) {
             artworkFilename = saveArtwork(imageData, audioHash: hash)
           }
         }
+        // AVFoundation reads text in an unknown code page as Latin-1, keeping every byte.
+        let present = tagged.indices.filter { tagged[$0] != nil }
+        let repaired = TagText.repair(present.map { tagged[$0]! })
+        var text = tagged
+        for (index, value) in zip(present, repaired) { text[index] = value }
+        let title = text[0] ?? url.deletingPathExtension().lastPathComponent
+        let artist = text[1] ?? "Unknown artist"
+        let album = text[2]
         if artworkFilename == nil && url.pathExtension.lowercased() == "flac" {
           do {
             if let image = try FlacArtwork.embeddedImage(in: data) {
