@@ -38,6 +38,8 @@ PRIVACY_URL = "https://wiltodelta.com/projects/foldertone/privacy/"
 LIMITS = {"name": 30, "subtitle": 30, "keywords": 100, "description": 4000, "whatsNew": 4000}
 # App information states in which the name and subtitle can still change.
 EDITABLE_INFO = {"PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED", "METADATA_REJECTED"}
+# Version states that App Store Connect still lets the developer change.
+EDITABLE_VERSION = EDITABLE_INFO | {"INVALID_BINARY"}
 # Stands in for the IDs of objects a dry run does not create.
 DRY_RUN_ID = "dry-run"
 
@@ -101,16 +103,27 @@ def check(client: Client) -> None:
 
 
 def find_or_create_version(client: Client, app: str, version: str) -> str:
-    existing = client.get(
-        f"/v1/apps/{app}/appStoreVersions",
-        **{"filter[platform]": "IOS", "filter[versionString]": version},
-    )["data"]
-    if existing:
-        state = existing[0]["attributes"].get("appStoreState")
+    versions = client.get(f"/v1/apps/{app}/appStoreVersions", **{"filter[platform]": "IOS"})["data"]
+    for existing in versions:
+        if existing["attributes"]["versionString"] != version:
+            continue
+        state = existing["attributes"].get("appStoreState")
         if state == "READY_FOR_SALE":
             raise ASCError(f"Version {version} is already on the App Store; bump MARKETING_VERSION")
-        log.info("Reusing App Store version %s (%s, %s)", version, existing[0]["id"], state)
-        return existing[0]["id"]
+        log.info("Reusing App Store version %s (%s, %s)", version, existing["id"], state)
+        return existing["id"]
+    # App Store Connect keeps one unreleased version, so one pulled from review or rejected
+    # takes the new number instead of a new version being created.
+    for other in versions:
+        attributes = other["attributes"]
+        if (attributes.get("appVersionState") or attributes.get("appStoreState")) in EDITABLE_VERSION:
+            log.info("Renaming unreleased version %s to %s", attributes["versionString"], version)
+            client.request(
+                "PATCH",
+                f"/v1/appStoreVersions/{other['id']}",
+                {"data": {"type": "appStoreVersions", "id": other["id"], "attributes": {"versionString": version}}},
+            )
+            return other["id"]
     created = client.request(
         "POST",
         "/v1/appStoreVersions",

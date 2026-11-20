@@ -27,7 +27,7 @@ A reported pause failure during playlist playback reproduced on an iOS 26.5 simu
 
 ## Release 1.4.0
 
-Build 1, archived by `scripts/release.sh` from commit `ab66c9b` (tag `v1.4.0`) after CI passed on it, was uploaded and submitted for App Review on 2026-11-19. It adds the interface in every iOS language, recovery of Cyrillic tags truncated to the low byte of each UTF-16 code unit, and trimming of spaces around tag text. Russian, Arabic, German and Tamil were inspected on an iOS 26.5 simulator, Arabic mirrored right to left; translations other than Russian have not been read by native speakers. The physical checks in `release.md` were not run for this build.
+Build 1, archived by `scripts/release.sh` from commit `ab66c9b` (tag `v1.4.0`) after CI passed on it, was uploaded and submitted for App Review on 2026-11-19. On 2026-11-20, while it was in review, the submission was cancelled so that the App Store page could ship in every language at once; the version record became 1.4.1 and 1.4.0 was never released. It adds the interface in every iOS language, recovery of Cyrillic tags truncated to the low byte of each UTF-16 code unit, and trimming of spaces around tag text. Russian, Arabic, German and Tamil were inspected on an iOS 26.5 simulator, Arabic mirrored right to left; translations other than Russian have not been read by native speakers. The physical checks in `release.md` were not run for this build.
 
 ## Release 1.3.0
 

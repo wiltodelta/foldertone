@@ -27,7 +27,7 @@ class FakeResponse(io.BytesIO):
         return False
 
 
-def fake_api(calls, existing_version, earlier_versions=True, open_items=None, bodies=None, current=None):
+def fake_api(calls, existing_version, earlier_versions=True, open_items=None, bodies=None, current=None, pulled=False):
     def urlopen(request, timeout):
         path = request.full_url.removeprefix(asc.API)
         calls.append((request.get_method(), path))
@@ -42,6 +42,8 @@ def fake_api(calls, existing_version, earlier_versions=True, open_items=None, bo
             if earlier_versions and "versionString" not in path:
                 earlier = {"id": "ver0", "attributes": {"versionString": "1.1.1", "appStoreState": "READY_FOR_SALE"}}
                 body["data"].append(earlier)
+            if pulled and "versionString" not in path:
+                body["data"].append({"id": "ver9", "attributes": {"versionString": "1.1.9", "appVersionState": "DEVELOPER_REJECTED"}})
         elif "appStoreVersionLocalizations?" in path:
             body = {"data": [{"id": "loc1", "attributes": {"locale": "en-US", **(current or {})}}]}
         elif path.startswith("/v1/apps/app1/appInfos"):
@@ -183,6 +185,18 @@ def test_reused_submission_gets_the_version(monkeypatch, metadata, client_factor
     assert added == (not has_version)
     assert ("POST", "/v1/reviewSubmissions") not in calls
     assert ("PATCH", "/v1/reviewSubmissions/sub1") in calls
+
+
+@pytest.mark.parametrize("pulled", [True, False])
+def test_pulled_version_takes_the_new_number(monkeypatch, metadata, client_factory, pulled):
+    calls, bodies = [], []
+    monkeypatch.setattr(asc.urllib.request, "urlopen", fake_api(calls, False, bodies=bodies, pulled=pulled))
+    asc.release(client_factory(False), "1.2.0", "4", "Notes", submit=False, timeout=1)
+    renamed = [b for m, p, b in bodies if (m, p) == ("PATCH", "/v1/appStoreVersions/ver9")]
+    assert bool(renamed) == pulled
+    assert (("POST", "/v1/appStoreVersions") in calls) == (not pulled)
+    if pulled:
+        assert renamed[0]["data"]["attributes"]["versionString"] == "1.2.0"
 
 
 def test_released_version_is_refused(monkeypatch, metadata, client_factory):
