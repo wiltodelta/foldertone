@@ -16,6 +16,16 @@ enum RepeatMode: String, CaseIterable {
     case .track: .off
     }
   }
+
+  /// What VoiceOver says for the mode, in the person's language.
+  var title: LocalizedStringResource {
+    switch self {
+    case .off: "Off"
+    case .playlist: "Playlist"
+    case .track:
+      LocalizedStringResource("Track", comment: "Repeat mode that repeats the current track")
+    }
+  }
 }
 
 struct PlaybackQueue {

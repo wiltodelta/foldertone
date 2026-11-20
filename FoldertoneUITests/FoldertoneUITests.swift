@@ -90,7 +90,7 @@ final class FoldertoneUITests: XCTestCase {
     app.buttons["toggleShuffle"].tap()
     XCTAssertEqual(app.buttons["toggleShuffle"].value as? String, "On")
     app.buttons["cycleRepeat"].tap()
-    XCTAssertEqual(app.buttons["cycleRepeat"].value as? String, "playlist")
+    XCTAssertEqual(app.buttons["cycleRepeat"].value as? String, "Playlist")
     app.buttons["Up next"].tap()
     XCTAssertTrue(app.navigationBars["Up next"].waitForExistence(timeout: 5))
     app.buttons["Done"].tap()

@@ -192,11 +192,19 @@ enum TagText {
 
   /// Repairs the title, artist and album of one file: text AVFoundation read from a legacy ID3
   /// frame as Latin-1, or text an app had misread as Latin-1 before storing it in any format.
+  /// Spaces that download sites pad tags with are trimmed after the repair, which reads a
+  /// leading space in truncated Cyrillic as Р.
   static func repair(_ fields: [String], languages: [String] = Locale.preferredLanguages)
     -> [String]
   {
+    recode(fields, languages: languages).map {
+      $0.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+  }
+
+  private static func recode(_ fields: [String], languages: [String]) -> [String] {
     guard fields.contains(where: { $0.unicodeScalars.contains { $0.value >= 0x80 } }) else {
-      return fields
+      return untruncate(fields)
     }
     var bytes: [Data] = []
     for field in fields {
@@ -207,6 +215,120 @@ enum TagText {
       bytes.append(data)
     }
     return decode(bytes, languages: languages)
+  }
+
+  /// Recovers Cyrillic that a tagger stored as the low byte of each UTF-16 code unit, so
+  /// "Что ты" arrives as "'B> BK", lowercase letters as digits, punctuation and capitals, and
+  /// capitals А to П as invisible control characters. Russian text in such a file has words with
+  /// ";<=>?@" (л to р) among letters or control characters; ASCII text stays as it is.
+  /// Р becomes a space and is restored only at the start of a field, where a space is unlikely.
+  /// Every field must be ASCII.
+  private static func untruncate(_ fields: [String]) -> [String] {
+    var evidence = false
+    let tokens = fields.map { field in
+      let words = field.split(separator: " ", omittingEmptySubsequences: false).map {
+        $0.unicodeScalars.map { UInt8($0.value) }
+      }
+      return words.indices.map { index -> (bytes: [UInt8], reading: String?) in
+        let later = words[(index + 1)...]
+        let word = words[index]
+        guard let reading = truncatedReading(of: word, later: later) else { return (word, nil) }
+        let score = plausibility(of: reading, as: cp1251)
+        // Control characters and ";<=>?@" are rare inside ASCII words but stand for А to П
+        // and л to р, so such a word is Cyrillic even when it has few vowels, as in Тролль.
+        // A colon, which stands for к, also separates digits in times.
+        let telling = word.contains {
+          (0x01...0x1F).contains($0) || (0x3B...0x40).contains($0)
+        }
+        if score >= 3 && telling { evidence = true }
+        return (word, score > 0 || telling ? reading : nil)
+      }
+    }
+    guard evidence else { return fields }
+    return tokens.map { words in
+      var output = words.map { $0.reading ?? String(decoding: $0.bytes, as: UTF8.self) }
+      var converted = words.map { $0.reading != nil }
+      // Russian one-letter words: к, о, с, у, я next to a converted word, and а, в, и, which
+      // read as digits, between two converted words or letters, as in "Ты и я".
+      // A converted one-letter word can let its neighbor convert, so repeat until none does.
+      let letters: [UInt8] = [0x3A, 0x3E, 0x41, 0x43, 0x4F]
+      let isLetter = { (index: Int) in
+        index < words.count && words[index].bytes.count == 1
+          && letters.contains(words[index].bytes[0])
+      }
+      var changed = true
+      while changed {
+        changed = false
+        for (bytes, needsBoth) in [(letters, false), ([0x30, 0x32, 0x38], true)] {
+          for (index, word) in words.enumerated()
+          where !converted[index] && word.bytes.count == 1 && bytes.contains(word.bytes[0]) {
+            let before = index > 0 && (converted[index - 1] || (needsBoth && isLetter(index - 1)))
+            let after =
+              index + 1 < words.count
+              && (converted[index + 1] || (needsBoth && isLetter(index + 1)))
+            guard needsBoth ? before && after : before || after else { continue }
+            output[index] = String(cyrillic(word.bytes[0]))
+            converted[index] = true
+            changed = true
+          }
+        }
+      }
+      if output.count > 1, output[0].isEmpty, converted[1],
+        output[1].first?.isLowercase == true
+      {
+        output[1] = "Р" + output[1]
+        output.removeFirst()
+      }
+      return output.joined(separator: " ")
+    }
+  }
+
+  private static let cp1251 = candidates.first { $0.encoding == .windowsCP1251 }!
+
+  /// The Cyrillic letter whose UTF-16 code unit has this low byte.
+  private static func cyrillic(_ byte: UInt8) -> Unicode.Scalar {
+    Unicode.Scalar(0x400 + UInt32(byte))!
+  }
+
+  /// The Cyrillic reading of one word of truncated UTF-16, or nil when the word cannot be one.
+  private static func truncatedReading(of word: [UInt8], later: ArraySlice<[UInt8]>) -> String? {
+    // Lowercase ASCII and P map to archaic letters; tab, newline and return to rare ones.
+    guard
+      word.allSatisfy({
+        (0x01...0x5F).contains($0) && ![0x09, 0x0A, 0x0D, 0x20, 0x50].contains($0)
+      }),
+      word.contains(where: {
+        (0x01...0x1F).contains($0) || (0x3A...0x4F).contains($0) || (0x51...0x5F).contains($0)
+      })
+    else { return nil }
+    let isPunctuation = { (byte: UInt8) in (0x21...0x2F).contains(byte) }
+    var scalars: [Unicode.Scalar] = []
+    var previousIsCapital = false
+    for (position, byte) in word.enumerated() {
+      var letter = true
+      if isPunctuation(byte) {
+        if position == 0 {
+          switch byte {
+          // Paired brackets and quotes stay punctuation; Ъ, Ы and Ь never start a word.
+          case 0x28: letter = !(word.last == 0x29 || later.contains { $0.last == 0x29 })
+          case 0x22: letter = !(word.dropFirst().last == 0x22 || later.contains { $0.last == 0x22 })
+          case 0x2A, 0x2B, 0x2C: letter = false
+          default: letter = word.count > 1
+          }
+        } else {
+          // Inside a lowercase word the byte is punctuation, inside a capitalized run a capital.
+          letter = previousIsCapital
+        }
+      }
+      if letter {
+        scalars.append(cyrillic(byte))
+        previousIsCapital = byte < 0x30
+      } else {
+        scalars.append(Unicode.Scalar(byte))
+        previousIsCapital = false
+      }
+    }
+    return String(String.UnicodeScalarView(scalars))
   }
 
   private static func usesNativeLetters(_ text: String, as candidate: Candidate) -> Bool {

@@ -119,7 +119,9 @@ final class MusicPlayer {
       let item = AVPlayerItem(url: track.url)
       itemObservation = item.observe(\.status, options: [.new]) { [weak self] item, _ in
         guard item.status == .failed else { return }
-        let message = item.error?.localizedDescription ?? "This audio file could not be played."
+        let message =
+          item.error?.localizedDescription
+          ?? String(localized: "This audio file could not be played.")
         Task { @MainActor in
           self?.log.error("Audio item failed: \(message, privacy: .public)")
           self?.errorMessage = message
@@ -233,7 +235,7 @@ final class MusicPlayer {
     }
     var info: [String: Any] = [
       MPMediaItemPropertyTitle: current.title,
-      MPMediaItemPropertyArtist: current.artist,
+      MPMediaItemPropertyArtist: current.displayArtist,
       MPMediaItemPropertyPlaybackDuration: current.duration,
       MPNowPlayingInfoPropertyElapsedPlaybackTime: elapsed,
       MPNowPlayingInfoPropertyPlaybackRate: player.rate,

@@ -664,6 +664,24 @@ enum SyncScenarios {
     try check(
       TagText.repair(["Ìíå íå õâàòàåò òåáÿ", "ÁÀÑÒÀ"], languages: ["en"])
         == ["Мне не хватает тебя", "БАСТА"], "Stored Latin-1 gibberish must be repaired")
+    // Text a tagger stored as the low byte of each UTF-16 code unit.
+    let low = { (text: String) in Data(text.utf16.map { UInt8($0 & 0xFF) }) }
+    let truncated = { (fields: [String]) in fields.map { String(decoding: low($0), as: UTF8.self) }
+    }
+    for fields in [
+      ["Что ты сделал со мной", "Две Марии"], ["Ты и я", "Ёлка"], ["Группа крови", "КИНО"],
+      ["Червона рута", "Софія"], ["Розовый фламинго", "Сплин"], ["Кое-что о любви", "БАСТА"],
+      ["Песня (ремикс)", "Мумий Тролль"],
+    ] {
+      try check(
+        TagText.repair(truncated(fields)) == fields, "Truncated UTF-16 \(fields) must be restored")
+    }
+    for fields in [
+      ["Track 1: Intro", "AC/DC"], ["U2", "B2B (Live)"], ["ABBA", "OK Computer"],
+      ["50 CENT", "MC <3"], ["DJ :)", "2:30"], ["Vol. 2", "R&B; Soul"],
+    ] {
+      try check(TagText.repair(fields) == fields, "ASCII text \(fields) must stay unchanged")
+    }
 
     let cyrillic = { (text: String) in text.data(using: .windowsCP1251)! }
     // End to end: MP3 files tagged in legacy code pages import with readable text.
@@ -688,13 +706,16 @@ enum SyncScenarios {
         frames: [
           ("TIT2", Data([0]) + "夜に駆ける".data(using: japanese)!),
           ("TPE1", Data([0]) + Data("YOASOBI".utf8)),
+          ("TALB", Data([0]) + Data("  THE BOOK \t".utf8)),
         ]) + audio).write(to: root.appendingPathComponent("Japanese.mp3"))
     let latin = "Café del Mar".data(using: .windowsCP1252)!
     try (audio + id3v1(title: latin, artist: Data("Energy 52".utf8), album: Data()))
       .write(to: root.appendingPathComponent("Western.mp3"))
+    try (audio + id3v1(title: low("Розовый фламинго"), artist: low("Две Марии"), album: Data()))
+      .write(to: root.appendingPathComponent("Truncated.mp3"))
     let result = try await FolderImporter().synchronize(
       [SyncSource(id: "encodings", url: root)], previous: LibraryIndex())
-    try check(result.failures == 0 && result.index.tracks.count == 3, "Tagged MP3s must import")
+    try check(result.failures == 0 && result.index.tracks.count == 4, "Tagged MP3s must import")
     let russian = try track("Мне не хватает тебя", in: result.index)
     try check(
       russian.artist == "БАСТА" && russian.album == "Баста 4",
@@ -703,8 +724,14 @@ enum SyncScenarios {
       try track("夜に駆ける", in: result.index).artist == "YOASOBI",
       "Shift-JIS ID3v2.3 frames must be decoded")
     try check(
+      try track("夜に駆ける", in: result.index).album == "THE BOOK",
+      "Spaces around tag text must be trimmed")
+    try check(
       try track("Café del Mar", in: result.index).artist == "Energy 52",
       "Western ID3v1 text must stay unchanged")
+    try check(
+      try track("Розовый фламинго", in: result.index).artist == "Две Марии",
+      "Truncated UTF-16 ID3v1 text must be restored")
   }
 
   /// An ID3v2 tag with the given frames.

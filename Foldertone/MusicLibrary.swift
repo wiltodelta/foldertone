@@ -20,6 +20,8 @@ struct Track: Identifiable, Codable, Equatable, Sendable {
   var metadataVersion: Int? = nil
 
   var url: URL { LibraryStorage.directory.appendingPathComponent(filename) }
+  /// The artist tag, or a placeholder in the person's current language when the file has none.
+  var displayArtist: String { artist.isEmpty ? String(localized: "Unknown artist") : artist }
   /// Removal follows the audio, so a renamed, moved or copied file stays removed.
   var removalKey: String { contentHash ?? id }
   func isRemoved(by keys: Set<String>) -> Bool {
@@ -51,7 +53,7 @@ extension Logger {
 
 enum LibraryStorage {
   /// Raising it rereads every track's tags; 2 decodes legacy code pages.
-  static let metadataVersion = 2
+  static let metadataVersion = 3
   /// UI tests launch with --isolated-storage, so a run on a real iPhone keeps the owner's
   /// sources, index, local copies and selected playlist untouched.
   static let isolated: Bool = {
@@ -302,9 +304,9 @@ actor FolderImporter {
         let present = tagged.indices.filter { tagged[$0] != nil }
         let repaired = TagText.repair(present.map { tagged[$0]! })
         var text = tagged
-        for (index, value) in zip(present, repaired) { text[index] = value }
+        for (index, value) in zip(present, repaired) { text[index] = value.isEmpty ? nil : value }
         let title = text[0] ?? url.deletingPathExtension().lastPathComponent
-        let artist = text[1] ?? "Unknown artist"
+        let artist = text[1] ?? ""
         let album = text[2]
         if artworkFilename == nil && url.pathExtension.lowercased() == "flac" {
           do {
@@ -404,7 +406,7 @@ final class MusicLibrary {
   private var visibleMemberships: [String: Set<String>] = [:]
   private var removedMemberships: [String: Set<String>] = [:]
   private(set) var isRefreshing = false
-  private(set) var status = "Your music, in one place."
+  private(set) var status = String(localized: "Your music, in one place.")
   var errorMessage: String?
   private var sources: [Source] = []
   private var index = LibraryIndex()
@@ -422,7 +424,7 @@ final class MusicLibrary {
     guard !sources.isEmpty else { return nil }
     return sources.count == 1
       ? displayName(sources[0].saved)
-      : "\(sources.count) sources connected"
+      : String(localized: "\(sources.count) sources connected")
   }
 
   var playlists: [Playlist] {
@@ -502,11 +504,12 @@ final class MusicLibrary {
   }
 
   private func displayName(_ saved: SavedSource) -> String {
-    saved.customName ?? Self.friendlyName(saved.name ?? "Music folder")
+    saved.customName ?? Self.friendlyName(saved.name ?? String(localized: "Music folder"))
   }
 
   private static func friendlyName(_ name: String) -> String {
-    name == "File Provider Storage" ? "Files" : name
+    name == "File Provider Storage"
+      ? String(localized: "Files", comment: "The name of the iOS Files app") : name
   }
 
   private static func sourceName(_ url: URL) -> String {
@@ -520,10 +523,14 @@ final class MusicLibrary {
     case busy, wrongKind, duplicate, emptyName
     var errorDescription: String? {
       switch self {
-      case .busy: "Wait for syncing to finish, then try again."
-      case .wrongKind: "Choose a folder for a folder playlist, or an audio file for a file source."
-      case .duplicate: "That source is already connected. Choose its existing playlist instead."
-      case .emptyName: "Enter a name for this source."
+      case .busy: String(localized: "Wait for syncing to finish, then try again.")
+      case .wrongKind:
+        String(
+          localized: "Choose a folder for a folder playlist, or an audio file for a file source.")
+      case .duplicate:
+        String(
+          localized: "That source is already connected. Choose its existing playlist instead.")
+      case .emptyName: String(localized: "Enter a name for this source.")
       }
     }
   }
@@ -581,12 +588,14 @@ final class MusicLibrary {
     do {
       index = try LibraryIndex.load()
     } catch {
-      errorMessage = "The saved library could not be read. Add its sources again to resync it."
+      errorMessage = String(
+        localized: "The saved library could not be read. Add its sources again to resync it.")
     }
     let saved: [SavedSource]
     if let data = defaults.data(forKey: "musicConnections") {
       do { saved = try JSONDecoder().decode([SavedSource].self, from: data) } catch {
-        errorMessage = "Saved sources could not be read. Add your files or folders again."
+        errorMessage = String(
+          localized: "Saved sources could not be read. Add your files or folders again.")
         saved = []
       }
     } else {
@@ -644,7 +653,7 @@ final class MusicLibrary {
     repeat {
       refreshRequested = false
       resolveSources()
-      status = "Syncing your music…"
+      status = String(localized: "Syncing your music…")
       let forced = dirtyPaths
       dirtyPaths.removeAll()
       do {
@@ -656,18 +665,18 @@ final class MusicLibrary {
         pendingFileURLs = result.pendingURLs
         if observing { rebuildObservers() }
         if result.failures > 0 {
-          status = "Some music is unavailable. Pull to retry."
+          status = String(localized: "Some music is unavailable. Pull to retry.")
         } else if result.pending > 0 {
-          status = "Downloading \(result.pending) files…"
+          status = String(localized: "Downloading \(result.pending) files…")
         } else {
-          status = "Up to date"
+          status = String(localized: "Up to date")
         }
       } catch is CancellationError {
         dirtyPaths.formUnion(forced)
         return
       } catch {
         dirtyPaths.formUnion(forced)
-        status = "Sync could not be saved. Pull to retry."
+        status = String(localized: "Sync could not be saved. Pull to retry.")
         log.error("Sync failed: \(error, privacy: .public)")
       }
     } while refreshRequested && !Task.isCancelled

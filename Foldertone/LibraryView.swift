@@ -91,6 +91,8 @@ struct LibraryView: View {
     return .library
   }
 
+  private var playlistTitle: String { selectedPlaylist?.name ?? String(localized: "All music") }
+
   private var playlistTracks: [Track] {
     guard let playlist = selectedPlaylist else { return library.tracks }
     return library.tracks.filter { playlist.trackIDs.contains($0.id) }
@@ -100,7 +102,7 @@ struct LibraryView: View {
     guard !query.isEmpty else { return playlistTracks }
     return playlistTracks.filter {
       $0.title.localizedCaseInsensitiveContains(query)
-        || $0.artist.localizedCaseInsensitiveContains(query)
+        || $0.displayArtist.localizedCaseInsensitiveContains(query)
     }
   }
 
@@ -216,11 +218,12 @@ struct LibraryView: View {
     VStack(spacing: 22) {
       RecordArtwork().frame(width: 168, height: 168).padding(.top, 30)
       VStack(spacing: 10) {
-        Text(library.sourceSummary ?? "A home for your music.")
+        Text(library.sourceSummary ?? String(localized: "A home for your music."))
           .font(.title2.weight(.semibold)).multilineTextAlignment(.center)
         Text(
           library.sourceSummary == nil
-            ? "Choose a folder to make a playlist,\nor open a song to start listening."
+            ? String(
+              localized: "Choose a folder to make a playlist,\nor open a song to start listening.")
             : library.status
         )
         .font(.body).foregroundStyle(Palette.secondaryText).multilineTextAlignment(.center)
@@ -262,7 +265,7 @@ struct LibraryView: View {
           .accessibilityIdentifier("manageSources")
         } label: {
           HStack(spacing: 6) {
-            Text(selectedPlaylist?.name ?? "All music").font(.headline).lineLimit(
+            Text(playlistTitle).font(.headline).lineLimit(
               dynamicTypeSize.isAccessibilitySize ? 2 : 1)
             Image(systemName: "chevron.down").font(.caption.weight(.semibold))
           }.padding(.horizontal, 14).padding(.vertical, 10)
@@ -270,10 +273,11 @@ struct LibraryView: View {
         .buttonStyle(.plain).musicGlassSurface(cornerRadius: 24)
         .foregroundStyle(.primary)
         .accessibilityLabel("Playlist")
-        .accessibilityValue(selectedPlaylist?.name ?? "All music")
+        .accessibilityValue(playlistTitle)
         .accessibilityIdentifier("playlistPicker")
-        Text("\(playlistTracks.count)").font(.subheadline.monospacedDigit()).foregroundStyle(
-          Palette.secondaryText)
+        Text(playlistTracks.count, format: .number).font(.subheadline.monospacedDigit())
+          .foregroundStyle(
+            Palette.secondaryText)
         Spacer()
       }
       HStack(spacing: 8) {
@@ -423,7 +427,7 @@ struct TrackRow: View {
       VStack(alignment: .leading, spacing: 5) {
         Text(track.title).font(.body.weight(.medium)).foregroundStyle(.primary)
           .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
-        Text(track.artist).font(.subheadline).foregroundStyle(Palette.secondaryText)
+        Text(track.displayArtist).font(.subheadline).foregroundStyle(Palette.secondaryText)
           .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
         if dynamicTypeSize.isAccessibilitySize {
           Text(track.duration.clockText).font(.caption.monospacedDigit()).foregroundStyle(
@@ -461,7 +465,9 @@ struct MiniPlayer: View {
           TrackArtwork(track: track).frame(width: 44, height: 44)
           VStack(alignment: .leading, spacing: 3) {
             Text(track.title).font(.subheadline.weight(.semibold)).lineLimit(1)
-            Text(player.isLoading ? "Loading…" : track.artist).font(.caption).foregroundStyle(
+            Text(player.isLoading ? String(localized: "Loading…") : track.displayArtist).font(
+              .caption
+            ).foregroundStyle(
               Palette.secondaryText
             ).lineLimit(1)
           }
@@ -554,7 +560,7 @@ struct PlayerView: View {
             .modeIndicator(player.repeatMode != .off)
         }
         .foregroundStyle(player.repeatMode == .off ? Palette.secondaryText : Palette.accent)
-        .accessibilityValue(player.repeatMode.rawValue)
+        .accessibilityValue(Text(player.repeatMode.title))
         .accessibilityIdentifier("cycleRepeat")
         .frame(width: 44, height: 44)
       }
@@ -573,7 +579,7 @@ struct PlayerView: View {
     VStack(spacing: 8) {
       Text(player.current?.title ?? "").font(.title.weight(.bold)).multilineTextAlignment(
         .center)
-      Text(player.current?.artist ?? "").font(.body).foregroundStyle(Palette.secondaryText)
+      Text(player.current?.displayArtist ?? "").font(.body).foregroundStyle(Palette.secondaryText)
       if let album = player.current?.album, !album.isEmpty {
         Text(album).font(.subheadline).foregroundStyle(Palette.secondaryText)
       }
