@@ -27,7 +27,7 @@ A reported pause failure during playlist playback reproduced on an iOS 26.5 simu
 
 ## Release 1.3.0
 
-Build 1, archived by `scripts/release.sh` from commit `0511237` (tag `v1.3.0`) after CI passed on it, was uploaded and submitted for App Review on 2026-11-18, set to release automatically after approval. It adds legacy tag encoding decoding. Version 1.2.0, the first under `com.wiltodelta.foldertone`, was approved and on sale by then. The physical checks in `release.md` were not run for this build.
+Build 1, archived by `scripts/release.sh` from commit `0511237` (tag `v1.3.0`) after CI passed on it, was uploaded and submitted for App Review on 2026-11-18, set to release automatically after approval, and the App Store released it on 2026-11-19. It adds legacy tag encoding decoding. The scheduled run three and a half hours after release still saw 1.2.0 in the iTunes Lookup API, so the GitHub release `v1.3.0` was published by a manual run of `publish-release.yml`. Version 1.2.0, the first under `com.wiltodelta.foldertone`, was approved and on sale by then. The physical checks in `release.md` were not run for this build.
 
 ## Legacy tag encodings
 
