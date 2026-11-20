@@ -1,0 +1,6 @@
+{
+  "name": "Foldertone",
+  "subtitle": "Mape kot seznami predvajanja",
+  "description": "Foldertone predvaja zvočne datoteke, ki jih že imate. V aplikaciji Datoteke izberite mapo in postane seznam predvajanja z vsemi skladbami iz njenih podmap na enem seznamu.\n\nDodajte, preimenujte, premaknite ali izbrišite glasbo v tej mapi in seznam predvajanja se samodejno posodobi. Spremembe se prikažejo sproti, ko je aplikacija odprta, in ko se vrnete vanjo.\n\n- Mape in skladbe iz iCloud Drive, V mojem iPhonu in drugih lokacij v Datotekah\n- MP3, FLAC, AAC/M4A, ALAC, WAV in AIFF\n- Naslovi, izvajalci, albumi in naslovnice, prebrani iz vaših datotek\n- Naključno predvajanje, ponavljanje in vedno vidna vrsta Naslednje\n- Predvajanje v ozadju in upravljanje na zaklenjenem zaslonu\n- Odprite posamezno skladbo in začne se predvajati, brez ustvarjanja seznama predvajanja\n\nFoldertone vašo glasbo samo bere. Nikoli ne spreminja ali briše izvirnih datotek. Brez računa, brez oglasov, brez sledenja.",
+  "keywords": "predvajalnik,glasba,flac,mp3,alac,wav,offline,zvok,datoteke,skladbe,audio,playlist"
+}

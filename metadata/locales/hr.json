@@ -1,0 +1,6 @@
+{
+  "name": "Foldertone",
+  "subtitle": "Vaše mape, vaše playliste",
+  "description": "Foldertone reproducira audiodatoteke koje već imate. Odaberite mapu u aplikaciji Datoteke i ona postaje playlista, sa svim pjesmama iz njezinih podmapa na jednom popisu.\n\nDodajte, preimenujte, premjestite ili obrišite glazbu u toj mapi i playlista će to pratiti. Promjene se prikazuju odmah dok je aplikacija otvorena, kao i kad joj se vratite.\n\n- Mape i pjesme s iCloud Drivea, iz lokacije Na mom iPhoneu i s drugih lokacija u aplikaciji Datoteke\n- MP3, FLAC, AAC/M4A, ALAC, WAV i AIFF\n- Naslovi, izvođači, albumi i omoti očitani iz vaših datoteka\n- Nasumična reprodukcija, ponavljanje i vidljiv red Sljedeće\n- Reprodukcija u pozadini i kontrole na zaključanom zaslonu\n- Otvorite jednu pjesmu i ona odmah svira, bez stvaranja playliste\n\nFoldertone samo čita vašu glazbu. Nikad ne mijenja niti briše vaše izvorne datoteke. Bez računa, bez oglasa, bez praćenja.",
+  "keywords": "glazbeni player,audio player,reproduktor,flac,mp3,alac,datoteke,lokalna glazba,offline,icloud drive"
+}

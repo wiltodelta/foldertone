@@ -42,33 +42,14 @@ An Account Holder or Admin completes these once:
 
 ## Listing
 
-- **Name:** Foldertone
-- **Subtitle:** Your folders, your playlists
+The App Store page lives in `metadata/`: `metadata/locales/<locale>.json` holds the name, subtitle, description and keywords of each App Store Connect locale, with `en-US.json` as the source the translations follow, and `metadata/whats-new.json` holds the release notes of every locale but en-US, whose notes come from the tag. `scripts/asc.py` writes all of them at release; there is no other copy of the page text. The app's Kazakh, Lithuanian and Hong Kong Chinese have no App Store locale of their own (Hong Kong reads `zh-Hant`), and the English storefronts other than the U.S. show `en-US`. The locale codes of the eleven languages App Store Connect added on 2026-03-31 (`bn-BD`, `gu-IN`, `kn-IN`, `ml-IN`, `mr-IN`, `or-IN`, `pa-IN`, `sl-SI`, `ta-IN`, `te-IN`, `ur-PK`) come from fastlane's list and are confirmed only by the first release that writes them.
+
 - **Category:** Music; secondary Productivity
-- **Support URL:** `https://wiltodelta.com/projects/foldertone/support/`
-- **Marketing URL:** `https://wiltodelta.com/projects/foldertone/`
+- **Support, marketing and privacy URLs:** the constants at the top of `scripts/asc.py`, the same in every locale.
 - **Copyright:** 2026 Victor Kuznetsov
 - **Availability:** iPhone only; Apple silicon Mac and Apple Vision Pro distribution is turned off.
-- **Keywords:** audio player,flac,mp3,alac,folder,playlist,files,icloud drive,local music,offline
 - **App Privacy:** Data Not Collected. Tracking: No.
 - **Encryption:** `ITSAppUsesNonExemptEncryption` is `NO`.
-
-**Description:**
-
-```text
-Foldertone plays the audio files you already own. Choose a folder in Files and it becomes a playlist, with every track from its subfolders in one flat list.
-
-Add, rename, move, or delete music in that folder and the playlist follows. Changes appear as they happen while the app is open, and when you come back to it.
-
-- Folders and songs from iCloud Drive, On My iPhone, and other Files locations
-- MP3, FLAC, AAC/M4A, ALAC, WAV, and AIFF
-- Titles, artists, albums, and cover art read from your files
-- Shuffle, repeat, and a visible Up next queue
-- Background playback and lock screen controls
-- Open a single song and it starts playing, without creating a playlist
-
-Foldertone only reads your music. It never changes or deletes your original files. No account, no ads, no tracking.
-```
 
 **Notes for App Review:**
 
@@ -95,9 +76,9 @@ Capture them last, from the submitted build, using the Debug-only `--sample-libr
 `scripts/release.sh` runs the release through the App Store Connect API, so no Xcode or browser sign-in is needed:
 
 1. Bump `MARKETING_VERSION` or `CURRENT_PROJECT_VERSION`, commit, and push. Wait for CI to pass on that commit.
-2. Tag it: `git tag -a vX.Y.Z` with "Foldertone X.Y.Z" as the subject and the What's New text as the body, then push the tag.
+2. Tag it: `git tag -a vX.Y.Z` with "Foldertone X.Y.Z" as the subject and the What's New text as the body, then push the tag. Translate that text into every locale of `metadata/whats-new.json` and set its `version` to X.Y.Z in the commit being tagged; the release refuses notes written for another version.
 3. Run `scripts/release.sh --dry-run`. It refuses a dirty tree, a tag that is not on HEAD or not annotated, and a commit without passing CI; it first reads App Store Connect and logs every write it would make, then archives and checks the archive.
-4. Run `scripts/release.sh`, which repeats that read-only check before building, to upload, create or reuse the App Store version, write What's New from the tag (App Store Connect has none for an app's first version, so it is skipped there), wait for processing, attach the build and prepare the review submission. Add `--submit` to send it.
+4. Run `scripts/release.sh`, which repeats that read-only check before building, to upload, create or reuse the App Store version, write the page of every locale in `metadata/` with What's New from the tag and `metadata/whats-new.json` (App Store Connect has none for an app's first version, so it is skipped there), write the name and subtitle of every locale into the new version's app information, wait for processing, attach the build and prepare the review submission. Add `--submit` to send it.
 
 The GitHub release follows the App Store on its own: `.github/workflows/publish-release.yml` runs on the schedule in its `cron` line (GitHub delays and skips scheduled runs, so the wait varies), reads the live version from the public iTunes Lookup API, and when tag `vX.Y.Z` has no GitHub release yet, `scripts/publish_release.py` publishes one titled with the tag subject and described by the tag body. It needs no App Store Connect key. Run it at once from the Actions tab (`gh workflow run publish-release.yml`), or locally with `GH_TOKEN=$(gh auth token) uv run --script scripts/publish_release.py --dry-run`. A failed run means the live version has no annotated tag. `scripts/release.sh` re-enables the workflow after an upload, because GitHub disables a public repository's schedules after 60 days without activity.
 

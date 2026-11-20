@@ -4,10 +4,10 @@
 # ///
 """App Store Connect API steps for a Foldertone release.
 
-`check` only reads. `release` creates or reuses the App Store version, writes its
-What's New text, waits for the uploaded build, attaches it and prepares a review
-submission; `--submit` sends that submission, and `--dry-run` performs reads only
-and logs every write it would make.
+`check` only reads. `release` creates or reuses the App Store version, writes the
+App Store page in every language under metadata/ (What's New included), waits for
+the uploaded build, attaches it and prepares a review submission; `--submit` sends
+that submission, and `--dry-run` performs reads only and logs every write it would make.
 
 Credentials come from ASC_KEY_ID, ASC_ISSUER_ID and ASC_KEY_PATH (the .p8 file,
 default ~/.appstoreconnect/private_keys/AuthKey_<ASC_KEY_ID>.p8). They never reach a log.
@@ -30,6 +30,14 @@ log = logging.getLogger("asc")
 API = "https://api.appstoreconnect.apple.com"
 BUNDLE_ID = "com.wiltodelta.foldertone"
 LOCALE = "en-US"
+METADATA = Path(__file__).resolve().parent.parent / "metadata"
+SUPPORT_URL = "https://wiltodelta.com/projects/foldertone/support/"
+MARKETING_URL = "https://wiltodelta.com/projects/foldertone/"
+PRIVACY_URL = "https://wiltodelta.com/projects/foldertone/privacy/"
+# App Store Connect limits, in characters.
+LIMITS = {"name": 30, "subtitle": 30, "keywords": 100, "description": 4000, "whatsNew": 4000}
+# App information states in which the name and subtitle can still change.
+EDITABLE_INFO = {"PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED", "METADATA_REJECTED"}
 # Stands in for the IDs of objects a dry run does not create.
 DRY_RUN_ID = "dry-run"
 
@@ -122,30 +130,73 @@ def first_version(client: Client, app: str, version: str) -> bool:
     return all(v["attributes"]["versionString"] == version for v in versions)
 
 
-def set_whats_new(client: Client, version_id: str, text: str) -> None:
-    if version_id == DRY_RUN_ID:
-        log.info("Dry run, would write What's New for the new version: %s", text)
-        return
-    localizations = client.get(
-        f"/v1/appStoreVersions/{version_id}/appStoreVersionLocalizations",
-        **{"filter[locale]": LOCALE},
-    )["data"]
-    if not localizations:
-        if client.dry_run:
-            log.info("Dry run, the new version's %s localization does not exist yet", LOCALE)
-            return
-        raise ASCError(f"Version {version_id} has no {LOCALE} localization")
-    client.request(
-        "PATCH",
-        f"/v1/appStoreVersionLocalizations/{localizations[0]['id']}",
-        {
-            "data": {
-                "type": "appStoreVersionLocalizations",
-                "id": localizations[0]["id"],
-                "attributes": {"whatsNew": text},
-            }
-        },
-    )
+def load_pages(directory: Path, version: str, whats_new: str | None) -> dict[str, dict]:
+    """Reads the page of every locale; whats_new is the en-US text, None for a first version."""
+    pages = {path.stem: json.loads(path.read_text()) for path in sorted((directory / "locales").glob("*.json"))}
+    if LOCALE not in pages:
+        raise ASCError(f"metadata/locales has no {LOCALE}.json")
+    texts = {}
+    if whats_new is not None:
+        notes = json.loads((directory / "whats-new.json").read_text())
+        if notes["version"] != version:
+            raise ASCError(f"metadata/whats-new.json is for {notes['version']}; translate the notes for {version}")
+        texts = {**notes["notes"], LOCALE: whats_new}
+    for locale, page in pages.items():
+        if whats_new is not None:
+            if locale not in texts:
+                raise ASCError(f"metadata/whats-new.json has no notes for {locale}")
+            page["whatsNew"] = texts[locale]
+        for field, limit in LIMITS.items():
+            if field != "whatsNew" and not page.get(field):
+                raise ASCError(f"{locale} has no {field}")
+            if len(page.get(field) or "") > limit:
+                raise ASCError(f"{locale} {field} is longer than {limit} characters")
+    return pages
+
+
+def write_localizations(client: Client, kind: str, parent: str, parent_id: str, wanted: dict[str, dict]) -> None:
+    """Brings each locale's localization of a version or app information to the wanted attributes,
+    creating missing ones and leaving unchanged ones alone."""
+    existing = {}
+    if parent_id != DRY_RUN_ID:
+        path = f"/v1/{parent}s/{parent_id}/{kind}"
+        existing = {item["attributes"]["locale"]: item for item in client.get(path, limit="200")["data"]}
+    for locale, attributes in wanted.items():
+        current = existing.get(locale)
+        if current is None:
+            relationship = {parent: {"data": {"type": parent + "s", "id": parent_id}}}
+            body = {"type": kind, "attributes": {"locale": locale, **attributes}, "relationships": relationship}
+            client.request("POST", f"/v1/{kind}", {"data": body})
+        elif any(current["attributes"].get(field) != value for field, value in attributes.items()):
+            body = {"type": kind, "id": current["id"], "attributes": attributes}
+            client.request("PATCH", f"/v1/{kind}/{current['id']}", {"data": body})
+
+
+def write_version_pages(client: Client, version_id: str, pages: dict[str, dict]) -> None:
+    fields = ("description", "keywords", "whatsNew")
+    wanted = {
+        locale: {**{field: page[field] for field in fields if field in page}, "supportUrl": SUPPORT_URL, "marketingUrl": MARKETING_URL}
+        for locale, page in pages.items()
+    }
+    write_localizations(client, "appStoreVersionLocalizations", "appStoreVersion", version_id, wanted)
+
+
+def write_app_info(client: Client, app: str, pages: dict[str, dict]) -> None:
+    infos = client.get(f"/v1/apps/{app}/appInfos")["data"]
+    editable = [
+        info["id"]
+        for info in infos
+        if {info["attributes"].get("state"), info["attributes"].get("appStoreState")} & EDITABLE_INFO
+    ]
+    if not editable and not client.dry_run:
+        raise ASCError("No editable app information; the new version should have created one")
+    # A dry run before the new version exists has no editable app information yet.
+    info = editable[0] if editable else DRY_RUN_ID
+    wanted = {
+        locale: {"name": page["name"], "subtitle": page["subtitle"], "privacyPolicyUrl": PRIVACY_URL}
+        for locale, page in pages.items()
+    }
+    write_localizations(client, "appInfoLocalizations", "appInfo", info, wanted)
 
 
 def wait_for_build(client: Client, app: str, version: str, build: str, timeout: int) -> str:
@@ -223,13 +274,23 @@ def prepare_submission(client: Client, app: str, version_id: str, submit: bool) 
     log.info("Submitted review submission %s", submission)
 
 
-def release(client: Client, version: str, build: str, whats_new: str, submit: bool, timeout: int) -> None:
+def release(
+    client: Client,
+    version: str,
+    build: str,
+    whats_new: str,
+    submit: bool,
+    timeout: int,
+) -> None:
     app = app_id(client)
-    version_id = find_or_create_version(client, app, version)
-    if first_version(client, app, version):
+    first = first_version(client, app, version)
+    if first:
         log.info("Version %s is the app's first, which has no What's New; skipping it", version)
-    else:
-        set_whats_new(client, version_id, whats_new)
+    # Every page is read and checked before the first write.
+    pages = load_pages(METADATA, version, None if first else whats_new)
+    version_id = find_or_create_version(client, app, version)
+    write_version_pages(client, version_id, pages)
+    write_app_info(client, app, pages)
     build_id = wait_for_build(client, app, version, build, timeout)
     client.request(
         "PATCH",

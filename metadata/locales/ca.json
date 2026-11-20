@@ -1,0 +1,6 @@
+{
+  "name": "Foldertone",
+  "subtitle": "Les teves carpetes i llistes",
+  "description": "Foldertone reprodueix els fitxers d'àudio que ja tens. Tria una carpeta a Fitxers i es converteix en una llista, amb totes les pistes de les seves subcarpetes juntes.\n\nAfegeix, canvia el nom, mou o elimina música d'aquesta carpeta i la llista s'actualitza. Els canvis apareixen a l'instant mentre l'app és oberta, i també quan hi tornes.\n\n- Carpetes i cançons d'iCloud Drive, Al meu iPhone i altres ubicacions de Fitxers\n- MP3, FLAC, AAC/M4A, ALAC, WAV i AIFF\n- Títols, artistes, àlbums i caràtules llegits dels teus fitxers\n- Aleatori, repetició i una cua «A continuació» visible\n- Reproducció en segon pla i controls a la pantalla bloquejada\n- Obre una sola cançó i comença a sonar, sense crear cap llista\n\nFoldertone només llegeix la teva música. Mai no modifica ni elimina els fitxers originals. Sense compte, sense anuncis, sense seguiment.",
+  "keywords": "reproductor,música,flac,mp3,alac,àudio,sense connexió,offline,local,cançons,wav,aiff,icloud"
+}

@@ -10,6 +10,7 @@ Act as a principal iOS engineer building Foldertone, a music player for files an
 - Release with `scripts/release.sh` through the App Store Connect API key; the key's `.p8` stays in `~/.appstoreconnect/private_keys/` and its IDs in the ignored `.env`, never in the public repository.
 - Never publish a GitHub release by hand: the scheduled `publish-release.yml` workflow publishes it from the tag once the App Store sells that version, and the website deploys its screenshots and README section by itself on its next scheduled refresh.
 - Follow `docs/release.md` for App Store releases; keep `Foldertone/PrivacyInfo.xcprivacy` and `docs/privacy.md` true to the code.
+- The App Store page of every locale lives in `metadata/`; each release translates its What's New into `metadata/whats-new.json` for that version, or `scripts/asc.py` refuses it.
 - Every user-visible string ships translated into each language in `knownRegions`, in `Foldertone/Localizable.xcstrings`; text built outside SwiftUI views uses `String(localized:)`. Compare the catalog with the keys `xcodebuild -exportLocalizations` extracts.
 - A new source file needs a file reference, build file, group entry and sources-phase entry in `Foldertone.xcodeproj/project.pbxproj`, and a line in `scripts/check-engine.sh` when the shared scenarios compile it.
 - There is no `maintain.sh`; the pre-commit gate is `xcrun swift-format lint --strict`, as CI runs it, `scripts/check-engine.sh` and the XCTest suite.

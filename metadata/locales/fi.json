@@ -1,0 +1,6 @@
+{
+  "name": "Foldertone",
+  "subtitle": "Kansiosi ovat soittolistojasi",
+  "description": "Foldertone toistaa äänitiedostot, jotka sinulla jo on. Valitse kansio Tiedostot-apissa, niin siitä tulee soittolista, jossa kaikki sen alikansioiden kappaleet ovat yhdessä tasaisessa listassa.\n\nLisää, nimeä uudelleen, siirrä tai poista musiikkia kansiossa, niin soittolista päivittyy mukana. Muutokset näkyvät heti, kun appi on auki, ja kun palaat siihen.\n\n- Kansiot ja kappaleet iCloud Drivesta, Omalta iPhonelta ja muista Tiedostot-sijainneista\n- MP3, FLAC, AAC/M4A, ALAC, WAV ja AIFF\n- Nimet, esittäjät, albumit ja kansikuvat luetaan tiedostoistasi\n- Sekoitus, uudelleentoisto ja näkyvä Seuraavaksi-jono\n- Taustatoisto ja säätimet lukitulla näytöllä\n- Avaa yksittäinen kappale, niin se alkaa soida luomatta soittolistaa\n\nFoldertone vain lukee musiikkiasi. Se ei koskaan muuta tai poista alkuperäisiä tiedostojasi. Ei tiliä, ei mainoksia, ei seurantaa.",
+  "keywords": "musiikkisoitin,äänisoitin,flac,mp3,alac,wav,tiedostot,icloud drive,paikallinen musiikki,offline"
+}

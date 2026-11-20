@@ -1,0 +1,6 @@
+{
+  "name": "Foldertone",
+  "subtitle": "Twoje foldery, twoje playlisty",
+  "description": "Foldertone odtwarza pliki audio, które już masz. Wybierz folder w aplikacji Pliki, a stanie się playlistą ze wszystkimi utworami z jego podfolderów na jednej liście.\n\nDodaj, zmień nazwę, przenieś lub usuń muzykę w tym folderze, a playlista się dostosuje. Zmiany pojawiają się na bieżąco, gdy aplikacja jest otwarta, i gdy do niej wracasz.\n\n- Foldery i utwory z iCloud Drive, „Na moim iPhonie” i innych miejsc w Plikach\n- MP3, FLAC, AAC/M4A, ALAC, WAV i AIFF\n- Tytuły, wykonawcy, albumy i okładki odczytywane z plików\n- Odtwarzanie losowe, powtarzanie i widoczna kolejka „Następne”\n- Odtwarzanie w tle i sterowanie z ekranu blokady\n- Otwórz pojedynczy utwór, a zacznie grać bez tworzenia playlisty\n\nFoldertone tylko odczytuje Twoją muzykę. Nigdy nie zmienia ani nie usuwa oryginalnych plików. Bez konta, bez reklam, bez śledzenia.",
+  "keywords": "odtwarzacz muzyki,flac,mp3,alac,wav,aiff,offline,pliki,audio,lokalna muzyka,utwory,icloud"
+}

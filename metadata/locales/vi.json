@@ -1,0 +1,6 @@
+{
+  "name": "Foldertone",
+  "subtitle": "Thư mục thành danh sách phát",
+  "description": "Foldertone phát các tệp âm thanh bạn đã có sẵn. Chọn một thư mục trong Tệp và thư mục đó trở thành danh sách phát, gom mọi bài từ các thư mục con vào một danh sách duy nhất.\n\nThêm, đổi tên, di chuyển hoặc xóa nhạc trong thư mục đó, danh sách phát sẽ cập nhật theo. Thay đổi hiện ra ngay khi ứng dụng đang mở và cả khi bạn quay lại.\n\n- Thư mục và bài hát từ iCloud Drive, Trên iPhone của tôi và các vị trí khác trong Tệp\n- MP3, FLAC, AAC/M4A, ALAC, WAV và AIFF\n- Tên bài, nghệ sĩ, album và ảnh bìa được đọc từ tệp của bạn\n- Phát ngẫu nhiên, lặp lại và hàng đợi Tiếp theo luôn hiển thị\n- Phát trong nền và điều khiển trên Màn hình khóa\n- Mở một bài hát là phát ngay, không cần tạo danh sách phát\n\nFoldertone chỉ đọc nhạc của bạn. Ứng dụng không bao giờ thay đổi hay xóa tệp gốc. Không cần tài khoản, không quảng cáo, không theo dõi.",
+  "keywords": "trình phát nhạc,nghe nhạc,flac,mp3,alac,tệp,icloud drive,offline,ngoại tuyến,lossless,wav"
+}

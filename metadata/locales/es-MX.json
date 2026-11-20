@@ -1,0 +1,6 @@
+{
+  "name": "Foldertone",
+  "subtitle": "Tus carpetas, tus playlists",
+  "description": "Foldertone reproduce los archivos de audio que ya tienes. Elige una carpeta en Archivos y se convierte en una playlist, con todas las pistas de sus subcarpetas en una sola lista.\n\nAgrega, cambia el nombre, mueve o borra música en esa carpeta y la playlist se actualiza. Los cambios aparecen al instante mientras la app está abierta, y también cuando regresas a ella.\n\n- Carpetas y canciones de iCloud Drive, En mi iPhone y otras ubicaciones de Archivos\n- MP3, FLAC, AAC/M4A, ALAC, WAV y AIFF\n- Títulos, artistas, álbumes y portadas tomados de tus archivos\n- Aleatorio, repetir y una fila “A continuación” visible\n- Reproducción en segundo plano y controles en la pantalla bloqueada\n- Abre una sola canción y empieza a sonar, sin crear una playlist\n\nFoldertone solo lee tu música. Nunca modifica ni borra tus archivos originales. Sin cuenta, sin anuncios, sin rastreo.",
+  "keywords": "reproductor,música,mp3,flac,alac,offline,sin internet,audio,local,canciones,wav,aiff,icloud"
+}

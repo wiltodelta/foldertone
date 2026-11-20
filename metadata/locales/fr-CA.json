@@ -1,0 +1,6 @@
+{
+  "name": "Foldertone",
+  "subtitle": "Dossiers et listes de lecture",
+  "description": "Foldertone lit les fichiers audio que vous possédez déjà. Choisissez un dossier dans Fichiers et il devient une liste de lecture, avec tous les morceaux de ses sous-dossiers réunis dans une seule liste.\n\nAjoutez, renommez, déplacez ou supprimez de la musique dans ce dossier, et la liste de lecture suit. Les changements apparaissent en direct quand l’app est ouverte, et dès que vous y revenez.\n\n- Dossiers et morceaux depuis iCloud Drive, Sur mon iPhone et les autres emplacements de Fichiers\n- MP3, FLAC, AAC/M4A, ALAC, WAV et AIFF\n- Titres, artistes, albums et pochettes lus depuis vos fichiers\n- Lecture aléatoire, répétition et file « À suivre » visible\n- Lecture en arrière-plan et commandes sur l’écran verrouillé\n- Ouvrez un seul morceau et il démarre aussitôt, sans créer de liste de lecture\n\nFoldertone se contente de lire votre musique. Il ne modifie ni ne supprime jamais vos fichiers d’origine. Aucun compte, aucune publicité, aucun suivi.",
+  "keywords": "lecteur audio,lecteur musique,flac,mp3,alac,wav,fichiers,icloud drive,musique locale,playlist"
+}

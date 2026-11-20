@@ -50,7 +50,7 @@ asc() {
   ASC_KEY_PATH="$KEY_PATH" uv run --script scripts/asc.py "$@" release \
     --version "$VERSION" --build "$BUILD" --whats-new-file "$WORK/whats-new.txt" $SUBMIT
 }
-# Read-only preflight: a released version, a bad key or a missing localization fails here,
+# Read-only preflight: a released version, a bad key or untranslated store notes fail here,
 # before minutes of archiving and uploading.
 echo "Checking App Store Connect before building"
 asc --dry-run

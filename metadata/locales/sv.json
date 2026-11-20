@@ -1,0 +1,6 @@
+{
+  "name": "Foldertone",
+  "subtitle": "Dina mappar, dina spellistor",
+  "description": "Foldertone spelar ljudfilerna du redan äger. Välj en mapp i Filer så blir den en spellista, med alla spår från undermapparna i en enda lista.\n\nLägg till, byt namn på, flytta eller radera musik i mappen så följer spellistan med. Ändringarna syns direkt medan appen är öppen och när du återvänder till den.\n\n- Mappar och låtar från iCloud Drive, På min iPhone och andra platser i Filer\n- MP3, FLAC, AAC/M4A, ALAC, WAV och AIFF\n- Titlar, artister, album och omslagsbilder hämtas från dina filer\n- Blanda, upprepa och en synlig Nästa-kö\n- Uppspelning i bakgrunden och reglage på låsskärmen\n- Öppna en enskild låt så börjar den spelas, utan att en spellista skapas\n\nFoldertone läser bara din musik. Appen ändrar eller raderar aldrig dina originalfiler. Inget konto, ingen reklam, ingen spårning.",
+  "keywords": "musikspelare,ljudspelare,flac,mp3,alac,filer,icloud drive,lokal musik,offline,mappspelare,wav"
+}
