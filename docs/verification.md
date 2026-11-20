@@ -25,6 +25,10 @@ Test definitions are the source of truth: `FoldertoneTests/FoldertoneTests.swift
 
 A reported pause failure during playlist playback reproduced on an iOS 26.5 simulator with a 30-track folder: the mini-player's Pause button was hittable only on its 17 by 19 point glyph, and taps there or on the bar's padding reached the track row scrolled behind the bar, restarting a track instead of pausing. Temporary playback logging showed `play(row)` for those taps and `toggle` for the full player's button. The fix puts the 44-point frame inside each button label and gives the bar a content shape; the same probe then paused and resumed from the mini-player, and a padding tap no longer started a row. `testLibrarySearchAndPlayback` now pauses and resumes from the mini-player and fails against the previous layout.
 
+## Release 1.4.1
+
+Build 1, archived by `scripts/release.sh` from commit `e267520` (tag `v1.4.1`) after CI passed on it, was uploaded and submitted for App Review on 2026-11-20 with the same app changes as 1.4.0. The release renamed the pulled 1.4.0 version record and wrote the App Store page in 46 more locales; reading them back afterwards, all 47 version pages and 47 app information localizations matched `metadata/`. Translations other than Russian have not been read by native speakers. The physical checks in `release.md` were not run for this build.
+
 ## Release 1.4.0
 
 Build 1, archived by `scripts/release.sh` from commit `ab66c9b` (tag `v1.4.0`) after CI passed on it, was uploaded and submitted for App Review on 2026-11-19. On 2026-11-20, while it was in review, the submission was cancelled so that the App Store page could ship in every language at once; the version record became 1.4.1 and 1.4.0 was never released. It adds the interface in every iOS language, recovery of Cyrillic tags truncated to the low byte of each UTF-16 code unit, and trimming of spaces around tag text. Russian, Arabic, German and Tamil were inspected on an iOS 26.5 simulator, Arabic mirrored right to left; translations other than Russian have not been read by native speakers. The physical checks in `release.md` were not run for this build.
