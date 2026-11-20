@@ -25,6 +25,10 @@ Test definitions are the source of truth: `FoldertoneTests/FoldertoneTests.swift
 
 A reported pause failure during playlist playback reproduced on an iOS 26.5 simulator with a 30-track folder: the mini-player's Pause button was hittable only on its 17 by 19 point glyph, and taps there or on the bar's padding reached the track row scrolled behind the bar, restarting a track instead of pausing. Temporary playback logging showed `play(row)` for those taps and `toggle` for the full player's button. The fix puts the 44-point frame inside each button label and gives the bar a content shape; the same probe then paused and resumed from the mini-player, and a padding tap no longer started a row. `testLibrarySearchAndPlayback` now pauses and resumes from the mini-player and fails against the previous layout.
 
+## Release 1.4.0
+
+Build 1, archived by `scripts/release.sh` from commit `ab66c9b` (tag `v1.4.0`) after CI passed on it, was uploaded and submitted for App Review on 2026-11-19. It adds the interface in every iOS language, recovery of Cyrillic tags truncated to the low byte of each UTF-16 code unit, and trimming of spaces around tag text. Russian, Arabic, German and Tamil were inspected on an iOS 26.5 simulator, Arabic mirrored right to left; translations other than Russian have not been read by native speakers. The physical checks in `release.md` were not run for this build.
+
 ## Release 1.3.0
 
 Build 1, archived by `scripts/release.sh` from commit `0511237` (tag `v1.3.0`) after CI passed on it, was uploaded and submitted for App Review on 2026-11-18, set to release automatically after approval, and the App Store released it on 2026-11-19. It adds legacy tag encoding decoding. The scheduled run three and a half hours after release still saw 1.2.0 in the iTunes Lookup API, so the GitHub release `v1.3.0` was published by a manual run of `publish-release.yml`. Version 1.2.0, the first under `com.wiltodelta.foldertone`, was approved and on sale by then. The physical checks in `release.md` were not run for this build.
