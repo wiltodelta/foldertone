@@ -27,7 +27,7 @@ A reported pause failure during playlist playback reproduced on an iOS 26.5 simu
 
 ## Release 1.4.1
 
-Build 1, archived by `scripts/release.sh` from commit `e267520` (tag `v1.4.1`) after CI passed on it, was uploaded and submitted for App Review on 2026-11-20 with the same app changes as 1.4.0. The release renamed the pulled 1.4.0 version record and wrote the App Store page in 46 more locales; reading them back afterwards, all 47 version pages and 47 app information localizations matched `metadata/`. Translations other than Russian have not been read by native speakers. The physical checks in `release.md` were not run for this build.
+Build 1, archived by `scripts/release.sh` from commit `e267520` (tag `v1.4.1`) after CI passed on it, was uploaded and submitted for App Review on 2026-11-20 with the same app changes as 1.4.0. The release renamed the pulled 1.4.0 version record and wrote the App Store page in 46 more locales; reading them back afterwards, all 47 version pages and 47 app information localizations matched `metadata/`. App Review approved it and the App Store released it on 2026-11-23; the iTunes Lookup API then returned 1.4.1 with the localized description in the U.S., Russian, German and Japanese storefronts. The scheduled `publish-release.yml` run published the GitHub release `v1.4.1` the same day (Pacific time), and the website's release refresh recorded `v1.4.1` for its product page, whose screenshots and copy needed no change. Translations other than Russian have not been read by native speakers. The physical checks in `release.md` were not run for this build.
 
 ## Release 1.4.0
 
